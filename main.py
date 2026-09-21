@@ -43,7 +43,13 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
     
     
 @app.get("/leads", response_model=list[LeadDBResponse])
-def get_leads(db: Session = Depends(get_db)):
-    leads = db.query(LeadDB).all()
+def get_leads(
+    priority: str | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(LeadDB)
 
-    return leads  
+    if priority:
+        query = query.filter(LeadDB.priority == priority)
+
+    return query.all()

@@ -54,4 +54,24 @@ def test_get_leads_endpoint(client):
 
     data = response.json()
 
-    assert isinstance(data, list)   
+    assert isinstance(data, list) 
+    
+    
+def test_get_leads_filters_by_priority(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Jan Kowalski",
+            "email": "jan@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    response = client.get("/leads?priority=high")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["priority"] == "high"
