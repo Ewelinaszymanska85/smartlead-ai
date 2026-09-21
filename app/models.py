@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -9,7 +11,7 @@ class Lead(BaseModel):
 
 class LeadAnalysis(BaseModel):
     category: str
-    priority: str
+    priority: Literal["normal", "high"]
 
 
 class LeadResponse(BaseModel):
