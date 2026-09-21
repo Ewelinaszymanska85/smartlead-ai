@@ -27,16 +27,8 @@ def test_lead_analysis_rejects_invalid_priority():
     except ValidationError:
         assert True
         
-        
-from fastapi.testclient import TestClient
 
-from main import app
-
-
-client = TestClient(app)
-
-
-def test_create_lead_endpoint():
+def test_create_lead_endpoint(client):
     response = client.post(
         "/leads",
         json={
