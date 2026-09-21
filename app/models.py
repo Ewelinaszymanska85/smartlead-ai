@@ -18,3 +18,16 @@ class LeadResponse(BaseModel):
     message: str
     lead: Lead
     analysis: LeadAnalysis
+    
+    
+class LeadDBResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    message: str
+    category: str
+    priority: Literal["normal", "high"]
+
+    model_config = {
+        "from_attributes": True
+    }

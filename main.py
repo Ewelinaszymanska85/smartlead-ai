@@ -1,6 +1,15 @@
-from fastapi import FastAPI
-from app.models import Lead, LeadResponse
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+
+from app.models import Lead, LeadResponse, LeadDBResponse
 from app.services import analyze_lead
+from app.database import Base, engine, get_db
+from app import db_models
+from app.db_models import LeadDB
+
+
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -11,11 +20,30 @@ def home():
 
 
 @app.post("/leads", response_model=LeadResponse)
-def create_lead(lead: Lead):
+def create_lead(lead: Lead, db: Session = Depends(get_db)):
     analysis = analyze_lead(lead.message)
+
+    lead_db = LeadDB(
+        name=lead.name,
+        email=str(lead.email),
+        message=lead.message,
+        category=analysis.category,
+        priority=analysis.priority
+    )
+
+    db.add(lead_db)
+    db.commit()
+    db.refresh(lead_db)
 
     return {
         "message": "Dane klienta zostały odebrane.",
         "lead": lead,
         "analysis": analysis
     }
+    
+    
+@app.get("/leads", response_model=list[LeadDBResponse])
+def get_leads(db: Session = Depends(get_db)):
+    leads = db.query(LeadDB).all()
+
+    return leads  

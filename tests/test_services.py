@@ -26,3 +26,30 @@ def test_lead_analysis_rejects_invalid_priority():
         assert False
     except ValidationError:
         assert True
+        
+        
+from fastapi.testclient import TestClient
+
+from main import app
+
+
+client = TestClient(app)
+
+
+def test_create_lead_endpoint():
+    response = client.post(
+        "/leads",
+        json={
+            "name": "Anna Nowak",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["lead"]["name"] == "Anna Nowak"
+    assert data["analysis"]["category"] == "strona internetowa"
+    assert data["analysis"]["priority"] == "normal"
