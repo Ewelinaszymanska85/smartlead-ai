@@ -75,3 +75,9 @@ def test_get_leads_filters_by_priority(client):
 
     assert len(data) == 1
     assert data[0]["priority"] == "high"
+    
+    
+def test_get_leads_rejects_invalid_priority(client):
+    response = client.get("/leads?priority=xyz")
+
+    assert response.status_code == 422

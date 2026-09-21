@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
@@ -44,7 +46,7 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
     
 @app.get("/leads", response_model=list[LeadDBResponse])
 def get_leads(
-    priority: str | None = None,
+    priority: Literal["normal", "high"] | None = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(LeadDB)
