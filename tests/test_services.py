@@ -81,3 +81,36 @@ def test_get_leads_rejects_invalid_priority(client):
     response = client.get("/leads?priority=xyz")
 
     assert response.status_code == 422
+    
+    
+def test_get_leads_filters_by_priority_and_category(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Jan Kowalski",
+            "email": "jan@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Nowak",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get(
+        "/leads?priority=high&category=sklep%20internetowy"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Jan Kowalski"
+    assert data[0]["priority"] == "high"
+    assert data[0]["category"] == "sklep internetowy"

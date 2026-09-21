@@ -47,11 +47,15 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
 @app.get("/leads", response_model=list[LeadDBResponse])
 def get_leads(
     priority: Literal["normal", "high"] | None = None,
+    category: str | None = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(LeadDB)
 
     if priority:
-        query = query.filter(LeadDB.priority == priority)
+         query = query.filter(LeadDB.priority == priority)
+
+    if category:
+        query = query.filter(LeadDB.category == category)
 
     return query.all()
