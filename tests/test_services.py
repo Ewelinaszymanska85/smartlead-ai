@@ -45,3 +45,13 @@ def test_create_lead_endpoint(client):
     assert data["lead"]["name"] == "Anna Nowak"
     assert data["analysis"]["category"] == "strona internetowa"
     assert data["analysis"]["priority"] == "normal"
+    
+    
+def test_get_leads_endpoint(client):
+    response = client.get("/leads")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)   
