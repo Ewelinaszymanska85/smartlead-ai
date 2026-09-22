@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import FastAPI, Depends, Query
+from fastapi import FastAPI, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from app.models import Lead, LeadResponse, LeadDBResponse
@@ -63,3 +63,26 @@ def get_leads(
     query = query.offset(offset).limit(limit)
 
     return query.all()
+
+
+@app.get("/leads/{lead_id}", response_model=LeadDBResponse)
+def get_lead(lead_id: int, db: Session = Depends(get_db)):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    return lead
+
+
+@app.get("/leads/{lead_id}", response_model=LeadDBResponse)
+def get_lead(lead_id: int, db: Session = Depends(get_db)):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        return {"detail": "Lead nie został znaleziony"}
+
+    return lead

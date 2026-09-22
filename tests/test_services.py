@@ -155,3 +155,35 @@ def test_get_leads_rejects_invalid_offset(client):
     response = client.get("/leads?offset=-1")
 
     assert response.status_code == 422
+    
+    
+def test_get_lead_by_id(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Jan Kowalski",
+            "email": "jan@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    response = client.get("/leads/1")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == 1
+    assert data["name"] == "Jan Kowalski"
+    assert data["category"] == "sklep internetowy"
+    assert data["priority"] == "high"
+    
+    
+def test_get_lead_by_id_returns_404_for_missing_lead(client):
+    response = client.get("/leads/999")
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data["detail"] == "Lead nie został znaleziony"
