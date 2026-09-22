@@ -297,3 +297,5 @@ def test_get_stats(client):
     assert data["total"] == 2
     assert data["high_priority"] == 1
     assert data["normal_priority"] == 1
+    assert data["categories"]["sklep internetowy"] == 1
+    assert data["categories"]["strona internetowa"] == 1

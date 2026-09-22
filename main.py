@@ -81,10 +81,22 @@ def get_stats(db: Session = Depends(get_db)):
         .count()
     )
 
+    categories = {}
+
+    for category in db.query(LeadDB.category).distinct():
+        category_name = category[0]
+
+        categories[category_name] = (
+            db.query(LeadDB)
+            .filter(LeadDB.category == category_name)
+            .count()
+        )
+
     return {
         "total": total,
         "high_priority": high_priority,
-        "normal_priority": normal_priority
+        "normal_priority": normal_priority,
+        "categories": categories
     }
 
 

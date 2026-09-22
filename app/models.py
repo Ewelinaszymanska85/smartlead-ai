@@ -43,3 +43,4 @@ class LeadStats(BaseModel):
     total: int
     high_priority: int
     normal_priority: int
+    categories: dict[str, int]
