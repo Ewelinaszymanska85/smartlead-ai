@@ -299,3 +299,33 @@ def test_get_stats(client):
     assert data["normal_priority"] == 1
     assert data["categories"]["sklep internetowy"] == 1
     assert data["categories"]["strona internetowa"] == 1
+    
+    
+def test_filter_leads_by_search(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads?search=sklep")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Anna"
+    assert data[0]["category"] == "sklep internetowy"

@@ -48,6 +48,7 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
 def get_leads(
     priority: Literal["normal", "high"] | None = None,
     category: str | None = None,
+    search: str | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
@@ -55,10 +56,13 @@ def get_leads(
     query = db.query(LeadDB)
 
     if priority:
-         query = query.filter(LeadDB.priority == priority)
+        query = query.filter(LeadDB.priority == priority)
 
     if category:
         query = query.filter(LeadDB.category == category)
+
+    if search:
+        query = query.filter(LeadDB.message.ilike(f"%{search}%"))
 
     query = query.offset(offset).limit(limit)
 
