@@ -329,3 +329,63 @@ def test_filter_leads_by_search(client):
     assert len(data) == 1
     assert data[0]["name"] == "Anna"
     assert data[0]["category"] == "sklep internetowy"
+    
+    
+def test_sort_leads_by_newest(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    response = client.get("/leads?sort=newest")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["name"] == "Piotr"
+    assert data[1]["name"] == "Anna"
+    
+    
+def test_sort_leads_by_oldest(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    response = client.get("/leads?sort=oldest")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["name"] == "Anna"
+    assert data[1]["name"] == "Piotr"

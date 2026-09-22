@@ -49,6 +49,7 @@ def get_leads(
     priority: Literal["normal", "high"] | None = None,
     category: str | None = None,
     search: str | None = None,
+    sort: Literal["newest", "oldest"] | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
@@ -63,6 +64,11 @@ def get_leads(
 
     if search:
         query = query.filter(LeadDB.message.ilike(f"%{search}%"))
+
+    if sort == "newest":
+        query = query.order_by(LeadDB.id.desc())
+    elif sort == "oldest":
+        query = query.order_by(LeadDB.id.asc())
 
     query = query.offset(offset).limit(limit)
 
