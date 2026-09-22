@@ -22,3 +22,15 @@ def analyze_lead(message: str):
         category=category,
         priority=priority
     ) 
+    
+    
+def prepare_lead_update(lead, existing_lead):
+    analysis = analyze_lead(lead.message)
+
+    existing_lead.name = lead.name
+    existing_lead.email = str(lead.email)
+    existing_lead.message = lead.message
+    existing_lead.category = analysis.category
+    existing_lead.priority = analysis.priority
+
+    return existing_lead

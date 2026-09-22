@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from app.models import Lead, LeadResponse, LeadDBResponse, LeadUpdate
-from app.services import analyze_lead
+from app.services import analyze_lead, prepare_lead_update
 from app.database import Base, engine, get_db
 from app import db_models
 from app.db_models import LeadDB
@@ -131,13 +131,7 @@ def update_lead(
             detail="Lead nie został znaleziony"
         )
 
-    analysis = analyze_lead(lead.message)
-
-    existing_lead.name = lead.name
-    existing_lead.email = str(lead.email)
-    existing_lead.message = lead.message
-    existing_lead.category = analysis.category
-    existing_lead.priority = analysis.priority
+    prepare_lead_update(lead, existing_lead)
 
     db.commit()
     db.refresh(existing_lead)
