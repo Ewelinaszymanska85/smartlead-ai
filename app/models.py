@@ -31,3 +31,9 @@ class LeadDBResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+    
+    
+class LeadUpdate(BaseModel):
+    name: str
+    email: EmailStr
+    message: str

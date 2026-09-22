@@ -220,3 +220,50 @@ def test_delete_lead_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
+    
+    
+def test_update_lead(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Testowa",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.put(
+        "/leads/1",
+        json={
+            "name": "Anna Kowalska",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["name"] == "Anna Kowalska"
+    assert data["email"] == "anna@example.com"
+    assert data["message"] == "Potrzebuję sklepu internetowego pilnie"
+    assert data["category"] == "sklep internetowy"
+    assert data["priority"] == "high"
+    
+    
+def test_update_lead_returns_404_for_missing_lead(client):
+    response = client.put(
+        "/leads/999",
+        json={
+            "name": "Anna Kowalska",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data["detail"] == "Lead nie został znaleziony"

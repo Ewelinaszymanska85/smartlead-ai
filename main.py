@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import FastAPI, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
-from app.models import Lead, LeadResponse, LeadDBResponse
+from app.models import Lead, LeadResponse, LeadDBResponse, LeadUpdate
 from app.services import analyze_lead
 from app.database import Base, engine, get_db
 from app import db_models
@@ -86,3 +86,60 @@ def get_lead(lead_id: int, db: Session = Depends(get_db)):
         return {"detail": "Lead nie został znaleziony"}
 
     return lead
+
+
+@app.get("/leads/{lead_id}", response_model=LeadDBResponse)
+def get_lead(lead_id: int, db: Session = Depends(get_db)):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    return lead
+
+
+@app.delete("/leads/{lead_id}")
+def delete_lead(lead_id: int, db: Session = Depends(get_db)):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    db.delete(lead)
+    db.commit()
+
+    return {"message": "Lead został usunięty"}
+
+
+@app.put("/leads/{lead_id}", response_model=LeadDBResponse)
+def update_lead(
+    lead_id: int,
+    lead: LeadUpdate,
+    db: Session = Depends(get_db)
+):
+    existing_lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not existing_lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    analysis = analyze_lead(lead.message)
+
+    existing_lead.name = lead.name
+    existing_lead.email = str(lead.email)
+    existing_lead.message = lead.message
+    existing_lead.category = analysis.category
+    existing_lead.priority = analysis.priority
+
+    db.commit()
+    db.refresh(existing_lead)
+
+    return existing_lead
