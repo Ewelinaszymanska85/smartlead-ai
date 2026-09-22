@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models import Lead, LeadResponse, LeadDBResponse
@@ -48,8 +48,8 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
 def get_leads(
     priority: Literal["normal", "high"] | None = None,
     category: str | None = None,
-    limit: int = 10,
-    offset: int = 0,
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
     query = db.query(LeadDB)

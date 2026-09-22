@@ -143,3 +143,15 @@ def test_get_leads_supports_pagination(client):
 
     assert len(data) == 1
     assert data[0]["name"] == "Anna Nowak"
+    
+    
+def test_get_leads_rejects_invalid_limit(client):
+    response = client.get("/leads?limit=0")
+
+    assert response.status_code == 422
+
+
+def test_get_leads_rejects_invalid_offset(client):
+    response = client.get("/leads?offset=-1")
+
+    assert response.status_code == 422
