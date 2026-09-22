@@ -114,3 +114,32 @@ def test_get_leads_filters_by_priority_and_category(client):
     assert data[0]["name"] == "Jan Kowalski"
     assert data[0]["priority"] == "high"
     assert data[0]["category"] == "sklep internetowy"
+    
+    
+def test_get_leads_supports_pagination(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Jan Kowalski",
+            "email": "jan@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Nowak",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads?limit=1&offset=1")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Anna Nowak"
