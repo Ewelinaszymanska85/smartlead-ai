@@ -37,3 +37,9 @@ class LeadUpdate(BaseModel):
     name: str
     email: EmailStr
     message: str
+    
+    
+class LeadStats(BaseModel):
+    total: int
+    high_priority: int
+    normal_priority: int

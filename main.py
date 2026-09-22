@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import FastAPI, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
-from app.models import Lead, LeadResponse, LeadDBResponse, LeadUpdate
+from app.models import Lead, LeadResponse, LeadDBResponse, LeadUpdate, LeadStats
 from app.services import analyze_lead, prepare_lead_update
 from app.database import Base, engine, get_db
 from app import db_models
@@ -63,6 +63,29 @@ def get_leads(
     query = query.offset(offset).limit(limit)
 
     return query.all()
+
+
+@app.get("/stats", response_model=LeadStats)
+def get_stats(db: Session = Depends(get_db)):
+    total = db.query(LeadDB).count()
+
+    high_priority = (
+        db.query(LeadDB)
+        .filter(LeadDB.priority == "high")
+        .count()
+    )
+
+    normal_priority = (
+        db.query(LeadDB)
+        .filter(LeadDB.priority == "normal")
+        .count()
+    )
+
+    return {
+        "total": total,
+        "high_priority": high_priority,
+        "normal_priority": normal_priority
+    }
 
 
 @app.get("/leads/{lead_id}", response_model=LeadDBResponse)

@@ -267,3 +267,33 @@ def test_update_lead_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
+    
+    
+def test_get_stats(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Testowa",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr Testowy",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/stats")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 2
+    assert data["high_priority"] == 1
+    assert data["normal_priority"] == 1
