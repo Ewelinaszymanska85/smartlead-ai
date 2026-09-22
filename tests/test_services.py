@@ -187,3 +187,36 @@ def test_get_lead_by_id_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
+    
+    
+def test_delete_lead(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr Testowy",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.delete("/leads/1")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["message"] == "Lead został usunięty"
+
+    get_response = client.get("/leads/1")
+
+    assert get_response.status_code == 404
+    
+    
+def test_delete_lead_returns_404_for_missing_lead(client):
+    response = client.delete("/leads/999")
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data["detail"] == "Lead nie został znaleziony"
