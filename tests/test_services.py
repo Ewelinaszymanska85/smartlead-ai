@@ -395,3 +395,9 @@ def test_invalid_category(client):
     response = client.get("/leads?category=nieistniejaca")
 
     assert response.status_code == 422
+    
+    
+def test_search_too_short(client):
+    response = client.get("/leads?search=a")
+
+    assert response.status_code == 422
