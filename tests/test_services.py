@@ -401,3 +401,9 @@ def test_search_too_short(client):
     response = client.get("/leads?search=a")
 
     assert response.status_code == 422
+    
+    
+def test_invalid_sort(client):
+    response = client.get("/leads?sort=invalid")
+
+    assert response.status_code == 422
