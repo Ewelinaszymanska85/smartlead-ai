@@ -407,3 +407,43 @@ def test_invalid_sort(client):
     response = client.get("/leads?sort=invalid")
 
     assert response.status_code == 422
+    
+    
+def test_search_lead_by_name(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Kowalska",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads?search=Anna")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Anna Kowalska"
+    
+    
+def test_search_lead_by_email(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr Nowak",
+            "email": "piotr@example.com",
+            "message": "Chcę aplikację mobilną"
+        }
+    )
+
+    response = client.get("/leads?search=piotr@example.com")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["email"] == "piotr@example.com"

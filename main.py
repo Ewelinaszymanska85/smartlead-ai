@@ -68,7 +68,11 @@ def get_leads(
         query = query.filter(LeadDB.category == category)
 
     if search:
-        query = query.filter(LeadDB.message.ilike(f"%{search}%"))
+        query = query.filter(
+            LeadDB.name.ilike(f"%{search}%")
+            | LeadDB.email.ilike(f"%{search}%")
+            | LeadDB.message.ilike(f"%{search}%")
+        )
 
     if sort == "newest":
         query = query.order_by(LeadDB.id.desc())
