@@ -389,3 +389,9 @@ def test_sort_leads_by_oldest(client):
     assert len(data) == 2
     assert data[0]["name"] == "Anna"
     assert data[1]["name"] == "Piotr"
+    
+    
+def test_invalid_category(client):
+    response = client.get("/leads?category=nieistniejaca")
+
+    assert response.status_code == 422

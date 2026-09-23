@@ -47,7 +47,12 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
 @app.get("/leads", response_model=list[LeadDBResponse])
 def get_leads(
     priority: Literal["normal", "high"] | None = None,
-    category: str | None = None,
+    category: Literal[
+        "sklep internetowy",
+        "aplikacja mobilna",
+        "strona internetowa",
+        "inne"
+    ] | None = None,
     search: str | None = None,
     sort: Literal["newest", "oldest"] | None = None,
     limit: int = Query(10, ge=1, le=100),
