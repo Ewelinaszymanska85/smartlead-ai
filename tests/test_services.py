@@ -447,3 +447,23 @@ def test_search_lead_by_email(client):
 
     assert len(data) == 1
     assert data[0]["email"] == "piotr@example.com"
+    
+    
+def test_search_lead_is_case_insensitive(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna Kowalska",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads?search=ANNA")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Anna Kowalska"
