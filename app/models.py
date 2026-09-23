@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr
@@ -22,6 +23,7 @@ class LeadResponse(BaseModel):
     
 class LeadDBResponse(BaseModel):
     id: int
+    created_at: datetime
     name: str
     email: EmailStr
     message: str
