@@ -467,3 +467,35 @@ def test_search_lead_is_case_insensitive(client):
 
     assert len(data) == 1
     assert data[0]["name"] == "Anna Kowalska"
+    
+    
+def test_search_with_priority_filter(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego pilnie"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    response = client.get(
+        "/leads?search=sklep&priority=high"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Anna"
+    assert data[0]["priority"] == "high"
