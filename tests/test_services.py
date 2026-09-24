@@ -531,3 +531,93 @@ def test_search_with_category_filter(client):
     assert len(data) == 1
     assert data[0]["name"] == "Anna"
     assert data[0]["category"] == "sklep internetowy"
+    
+    
+def test_filter_leads_by_created_from(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    response = client.get(
+        "/leads?created_from=2026-09-24"
+    )
+
+    assert response.status_code == 200
+    
+    data = response.json()
+
+    assert len(data) == 2
+    
+    
+def test_filter_leads_by_created_to(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Kasia",
+            "email": "kasia@example.com",
+            "message": "Potrzebuję aplikacji mobilnej"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Marek",
+            "email": "marek@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get(
+        "/leads?created_to=2026-09-25"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    
+    
+def test_filter_leads_by_created_date_range(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Ola",
+            "email": "ola@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    client.post(
+        "/leads",
+        json={
+            "name": "Tomek",
+            "email": "tomek@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        }
+    )
+
+    response = client.get(
+        "/leads?created_from=2026-09-24&created_to=2026-09-25"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2

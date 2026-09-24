@@ -55,6 +55,8 @@ def get_leads(
     ] | None = None,
     search: str | None = Query(None, min_length=2),
     sort: Literal["newest", "oldest"] | None = None,
+    created_from: str | None = None,
+    created_to: str | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
@@ -66,6 +68,12 @@ def get_leads(
 
     if category:
         query = query.filter(LeadDB.category == category)
+        
+    if created_from:
+        query = query.filter(LeadDB.created_at >= created_from)
+        
+    if created_to:
+        query = query.filter(LeadDB.created_at <= created_to)
 
     if search:
         query = query.filter(
