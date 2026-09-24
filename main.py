@@ -1,3 +1,5 @@
+from datetime import date
+
 from typing import Literal
 
 from fastapi import FastAPI, Depends, Query, HTTPException
@@ -55,13 +57,19 @@ def get_leads(
     ] | None = None,
     search: str | None = Query(None, min_length=2),
     sort: Literal["newest", "oldest"] | None = None,
-    created_from: str | None = None,
-    created_to: str | None = None,
+    created_from: date | None = None,
+    created_to: date | None = None,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
     query = db.query(LeadDB)
+    
+    if created_from and created_to and created_from > created_to:
+        raise HTTPException(
+            status_code=422,
+            detail="Data początkowa nie może być późniejsza niż data końcowa"
+        )
 
     if priority:
         query = query.filter(LeadDB.priority == priority)

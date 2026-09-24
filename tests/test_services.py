@@ -621,3 +621,27 @@ def test_filter_leads_by_created_date_range(client):
     data = response.json()
 
     assert len(data) == 2
+    
+    
+def test_invalid_created_from(client):
+    response = client.get(
+        "/leads?created_from=abc"
+    )
+
+    assert response.status_code == 422
+    
+    
+def test_invalid_created_to(client):
+    response = client.get(
+        "/leads?created_to=abc"
+    )
+
+    assert response.status_code == 422
+    
+    
+def test_invalid_created_date_range(client):
+    response = client.get(
+        "/leads?created_from=2026-09-25&created_to=2026-09-24"
+    )
+
+    assert response.status_code == 422
