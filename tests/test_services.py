@@ -645,3 +645,72 @@ def test_invalid_created_date_range(client):
     )
 
     assert response.status_code == 422
+    
+    
+def test_update_lead_status(client):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads")
+
+    assert response.status_code == 200
+
+    leads = response.json()
+    lead_id = leads[-1]["id"]
+
+    response = client.patch(
+        f"/leads/{lead_id}/status",
+        json={
+            "status": "contacted"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "contacted"
+    
+    
+def test_invalid_lead_status(client):
+    response = client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        }
+    )
+
+    response = client.get("/leads")
+
+    assert response.status_code == 200
+
+    leads = response.json()
+    lead_id = leads[-1]["id"]
+
+    response = client.patch(
+        f"/leads/{lead_id}/status",
+        json={
+            "status": "xyz"
+        }
+    )
+
+    assert response.status_code == 422
+    
+    
+def test_update_status_for_missing_lead(client):
+    response = client.patch(
+        "/leads/9999/status",
+        json={
+            "status": "contacted"
+        }
+    )
+
+    assert response.status_code == 404
