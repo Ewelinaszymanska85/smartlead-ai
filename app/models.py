@@ -29,6 +29,7 @@ class LeadDBResponse(BaseModel):
     message: str
     category: str
     priority: Literal["normal", "high"]
+    status: Literal["new", "contacted", "in_progress", "closed"]
 
     model_config = {
         "from_attributes": True
@@ -46,3 +47,7 @@ class LeadStats(BaseModel):
     high_priority: int
     normal_priority: int
     categories: dict[str, int]
+    
+    
+class LeadStatusUpdate(BaseModel):
+    status: Literal["new", "contacted", "in_progress", "closed"]

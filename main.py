@@ -5,7 +5,14 @@ from typing import Literal
 from fastapi import FastAPI, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
-from app.models import Lead, LeadResponse, LeadDBResponse, LeadUpdate, LeadStats
+from app.models import (
+    Lead,
+    LeadResponse,
+    LeadDBResponse,
+    LeadUpdate,
+    LeadStats,
+    LeadStatusUpdate
+)
 from app.services import analyze_lead, prepare_lead_update
 from app.database import Base, engine, get_db
 from app import db_models
@@ -32,7 +39,8 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
         email=str(lead.email),
         message=lead.message,
         category=analysis.category,
-        priority=analysis.priority
+        priority=analysis.priority,
+        status="new"
     )
 
     db.add(lead_db)
@@ -207,3 +215,24 @@ def update_lead(
     db.refresh(existing_lead)
 
     return existing_lead
+
+@app.patch("/leads/{lead_id}/status", response_model=LeadDBResponse)
+def update_lead_status(
+    lead_id: int,
+    status_update: LeadStatusUpdate,
+    db: Session = Depends(get_db)
+):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    lead.status = status_update.status
+
+    db.commit()
+    db.refresh(lead)
+
+    return lead

@@ -19,3 +19,4 @@ class LeadDB(Base):
     message = Column(Text, nullable=False)
     category = Column(String(100), nullable=False)
     priority = Column(String(20), nullable=False)
+    status = Column(String(20), nullable=False, default="new")
