@@ -731,3 +731,60 @@ def test_register_user(client):
 
     assert data["username"] == "testuser"
     assert data["message"] == "Użytkownik został utworzony"
+    
+    
+def test_login_user(client):
+    client.post(
+        "/register",
+        json={
+            "username": "loginuser",
+            "password": "Test123"
+        }
+    )
+
+    response = client.post(
+        "/login",
+        json={
+            "username": "loginuser",
+            "password": "Test123"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["username"] == "loginuser"
+    assert data["message"] == "Logowanie zakończone pomyślnie"
+    
+    
+def test_login_with_wrong_password(client):
+    client.post(
+        "/register",
+        json={
+            "username": "wrongpassworduser",
+            "password": "Test123"
+        }
+    )
+
+    response = client.post(
+        "/login",
+        json={
+            "username": "wrongpassworduser",
+            "password": "ZleHaslo"
+        }
+    )
+
+    assert response.status_code == 401
+    
+    
+def test_login_with_unknown_user(client):
+    response = client.post(
+        "/login",
+        json={
+            "username": "nieistniejacy",
+            "password": "Test123"
+        }
+    )
+
+    assert response.status_code == 401

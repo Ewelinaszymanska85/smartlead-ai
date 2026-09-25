@@ -12,10 +12,11 @@ from app.models import (
     LeadUpdate,
     LeadStats,
     LeadStatusUpdate,
-    UserCreate
+    UserCreate,
+    UserLogin
 )
 from app.services import analyze_lead, prepare_lead_update
-from app.security import hash_password
+from app.security import hash_password, verify_password
 from app.database import Base, engine, get_db
 from app import db_models
 from app import user_models
@@ -50,6 +51,30 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return {
         "message": "Użytkownik został utworzony",
         "username": new_user.username
+    }
+    
+    
+@app.post("/login")
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    existing_user = db.query(UserDB).filter(
+        UserDB.username == user.username
+    ).first()
+
+    if not existing_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Nieprawidłowa nazwa użytkownika lub hasło"
+        )
+
+    if not verify_password(user.password, existing_user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Nieprawidłowa nazwa użytkownika lub hasło"
+        )
+
+    return {
+        "message": "Logowanie zakończone pomyślnie",
+        "username": existing_user.username
     }
 
 
