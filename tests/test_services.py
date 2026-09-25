@@ -272,7 +272,7 @@ def test_delete_lead_returns_404_for_missing_lead(
     assert data["detail"] == "Lead nie został znaleziony"
 
 
-def test_update_lead(client):
+def test_update_lead(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -283,7 +283,8 @@ def test_update_lead(client):
     )
 
     response = client.put(
-        "/leads/1",
+    "/leads/1",
+    headers=auth_headers,
         json={
             "name": "Anna Kowalska",
             "email": "anna@example.com",
@@ -302,9 +303,13 @@ def test_update_lead(client):
     assert data["priority"] == "high"
 
 
-def test_update_lead_returns_404_for_missing_lead(client):
+def test_update_lead_returns_404_for_missing_lead(
+    client,
+    auth_headers
+):
     response = client.put(
         "/leads/999",
+        headers=auth_headers,
         json={
             "name": "Anna Kowalska",
             "email": "anna@example.com",

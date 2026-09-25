@@ -312,10 +312,11 @@ def delete_lead(
     return {"message": "Lead został usunięty"}
 
 
-@app.put("/leads/{lead_id}", response_model=LeadDBResponse)
+@app.put("/leads/{lead_id}")
 def update_lead(
     lead_id: int,
-    lead: LeadUpdate,
+    lead_update: LeadUpdate,
+    current_user: str = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
     existing_lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
@@ -326,7 +327,7 @@ def update_lead(
             detail="Lead nie został znaleziony"
         )
 
-    prepare_lead_update(lead, existing_lead)
+    prepare_lead_update(lead_update, existing_lead)
 
     db.commit()
     db.refresh(existing_lead)
