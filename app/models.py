@@ -51,3 +51,8 @@ class LeadStats(BaseModel):
     
 class LeadStatusUpdate(BaseModel):
     status: Literal["new", "contacted", "in_progress", "closed"]
+    
+    
+class UserCreate(BaseModel):
+    username: str
+    password: str

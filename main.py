@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from typing import Literal
 
@@ -11,11 +11,15 @@ from app.models import (
     LeadDBResponse,
     LeadUpdate,
     LeadStats,
-    LeadStatusUpdate
+    LeadStatusUpdate,
+    UserCreate
 )
 from app.services import analyze_lead, prepare_lead_update
+from app.security import hash_password
 from app.database import Base, engine, get_db
 from app import db_models
+from app import user_models
+from app.user_models import UserDB
 from app.db_models import LeadDB
 
 
@@ -28,6 +32,25 @@ app = FastAPI()
 @app.get("/")
 def home():
     return {"message": "SmartLead AI działa!"}
+
+
+@app.post("/register")
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    password_hash = hash_password(user.password)
+
+    new_user = UserDB(
+        username=user.username,
+        password_hash=password_hash
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "Użytkownik został utworzony",
+        "username": new_user.username
+    }
 
 
 @app.post("/leads", response_model=LeadResponse)
@@ -89,7 +112,8 @@ def get_leads(
         query = query.filter(LeadDB.created_at >= created_from)
         
     if created_to:
-        query = query.filter(LeadDB.created_at <= created_to)
+        created_to_next_day = created_to + timedelta(days=1)
+        query = query.filter(LeadDB.created_at < created_to_next_day)
 
     if search:
         query = query.filter(

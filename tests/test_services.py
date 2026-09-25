@@ -714,3 +714,20 @@ def test_update_status_for_missing_lead(client):
     )
 
     assert response.status_code == 404
+    
+    
+def test_register_user(client):
+    response = client.post(
+        "/register",
+        json={
+            "username": "testuser",
+            "password": "Test123"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["username"] == "testuser"
+    assert data["message"] == "Użytkownik został utworzony"
