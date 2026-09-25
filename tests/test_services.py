@@ -1,4 +1,5 @@
 from app.services import analyze_lead
+from app.jwt import create_access_token
 from pydantic import ValidationError
 from app.models import LeadAnalysis
 
@@ -788,3 +789,10 @@ def test_login_with_unknown_user(client):
     )
 
     assert response.status_code == 401
+    
+    
+def test_create_access_token():
+    token = create_access_token({"sub": "admin"})
+
+    assert token is not None
+    assert isinstance(token, str)
