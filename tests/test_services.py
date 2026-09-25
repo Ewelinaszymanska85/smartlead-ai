@@ -185,7 +185,7 @@ def test_get_leads_rejects_invalid_offset(client, auth_headers):
     assert response.status_code == 422
 
 
-def test_get_lead_by_id(client):
+def test_get_lead_by_id(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -195,7 +195,10 @@ def test_get_lead_by_id(client):
         }
     )
 
-    response = client.get("/leads/1")
+    response = client.get(
+    "/leads/1",
+    headers=auth_headers
+)
 
     assert response.status_code == 200
 
@@ -207,8 +210,15 @@ def test_get_lead_by_id(client):
     assert data["priority"] == "high"
 
 
-def test_get_lead_by_id_returns_404_for_missing_lead(client):
-    response = client.get("/leads/999")
+def test_get_lead_by_id_returns_404_for_missing_lead(
+    client,
+    auth_headers
+):
+    
+    response = client.get(
+    "/leads/999",
+    headers=auth_headers
+)
 
     assert response.status_code == 404
 
@@ -217,7 +227,7 @@ def test_get_lead_by_id_returns_404_for_missing_lead(client):
     assert data["detail"] == "Lead nie został znaleziony"
 
 
-def test_delete_lead(client):
+def test_delete_lead(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -235,7 +245,10 @@ def test_delete_lead(client):
 
     assert data["message"] == "Lead został usunięty"
 
-    get_response = client.get("/leads/1")
+    get_response = client.get(
+        "/leads/1",
+        headers=auth_headers
+    )
 
     assert get_response.status_code == 404
 
