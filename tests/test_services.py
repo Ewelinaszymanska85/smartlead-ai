@@ -29,9 +29,10 @@ def test_lead_analysis_rejects_invalid_priority():
         assert True
 
 
-def test_create_lead_endpoint(client):
+def test_create_lead_endpoint(client, auth_headers):
     response = client.post(
         "/leads",
+        headers=auth_headers,
         json={
             "name": "Anna Nowak",
             "email": "anna@example.com",
@@ -196,9 +197,9 @@ def test_get_lead_by_id(client, auth_headers):
     )
 
     response = client.get(
-    "/leads/1",
-    headers=auth_headers
-)
+        "/leads/1",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -214,11 +215,10 @@ def test_get_lead_by_id_returns_404_for_missing_lead(
     client,
     auth_headers
 ):
-    
     response = client.get(
-    "/leads/999",
-    headers=auth_headers
-)
+        "/leads/999",
+        headers=auth_headers
+    )
 
     assert response.status_code == 404
 
@@ -238,9 +238,9 @@ def test_delete_lead(client, auth_headers):
     )
 
     response = client.delete(
-    "/leads/1",
-    headers=auth_headers
-)
+        "/leads/1",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -261,9 +261,9 @@ def test_delete_lead_returns_404_for_missing_lead(
     auth_headers
 ):
     response = client.delete(
-    "/leads/999",
-    headers=auth_headers
-)
+        "/leads/999",
+        headers=auth_headers
+    )
 
     assert response.status_code == 404
 
@@ -283,8 +283,8 @@ def test_update_lead(client, auth_headers):
     )
 
     response = client.put(
-    "/leads/1",
-    headers=auth_headers,
+        "/leads/1",
+        headers=auth_headers,
         json={
             "name": "Anna Kowalska",
             "email": "anna@example.com",
