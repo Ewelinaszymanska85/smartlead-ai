@@ -27,7 +27,7 @@ def test_lead_analysis_rejects_invalid_priority():
         assert False
     except ValidationError:
         assert True
-        
+
 
 def test_create_lead_endpoint(client):
     response = client.post(
@@ -46,19 +46,22 @@ def test_create_lead_endpoint(client):
     assert data["lead"]["name"] == "Anna Nowak"
     assert data["analysis"]["category"] == "strona internetowa"
     assert data["analysis"]["priority"] == "normal"
-    
-    
-def test_get_leads_endpoint(client):
-    response = client.get("/leads")
+
+
+def test_get_leads_endpoint(client, auth_headers):
+    response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
     data = response.json()
 
-    assert isinstance(data, list) 
-    
-    
-def test_get_leads_filters_by_priority(client):
+    assert isinstance(data, list)
+
+
+def test_get_leads_filters_by_priority(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -68,7 +71,10 @@ def test_get_leads_filters_by_priority(client):
         }
     )
 
-    response = client.get("/leads?priority=high")
+    response = client.get(
+        "/leads?priority=high",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -76,15 +82,18 @@ def test_get_leads_filters_by_priority(client):
 
     assert len(data) == 1
     assert data[0]["priority"] == "high"
-    
-    
-def test_get_leads_rejects_invalid_priority(client):
-    response = client.get("/leads?priority=xyz")
+
+
+def test_get_leads_rejects_invalid_priority(client, auth_headers):
+    response = client.get(
+        "/leads?priority=xyz",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
-    
-    
-def test_get_leads_filters_by_priority_and_category(client):
+
+
+def test_get_leads_filters_by_priority_and_category(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -104,7 +113,8 @@ def test_get_leads_filters_by_priority_and_category(client):
     )
 
     response = client.get(
-        "/leads?priority=high&category=sklep%20internetowy"
+        "/leads?priority=high&category=sklep%20internetowy",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -115,9 +125,9 @@ def test_get_leads_filters_by_priority_and_category(client):
     assert data[0]["name"] == "Jan Kowalski"
     assert data[0]["priority"] == "high"
     assert data[0]["category"] == "sklep internetowy"
-    
-    
-def test_get_leads_supports_pagination(client):
+
+
+def test_get_leads_supports_pagination(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -136,28 +146,45 @@ def test_get_leads_supports_pagination(client):
         }
     )
 
-    response = client.get("/leads?limit=1&offset=1")
+    client.post(
+        "/leads",
+        json={
+            "name": "Piotr Nowak",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję aplikacji mobilnej"
+        }
+    )
+
+    response = client.get(
+        "/leads?limit=2&offset=0",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Anna Nowak"
-    
-    
-def test_get_leads_rejects_invalid_limit(client):
-    response = client.get("/leads?limit=0")
+    assert len(data) == 2
+
+
+def test_get_leads_rejects_invalid_limit(client, auth_headers):
+    response = client.get(
+        "/leads?limit=0",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
 
 
-def test_get_leads_rejects_invalid_offset(client):
-    response = client.get("/leads?offset=-1")
+def test_get_leads_rejects_invalid_offset(client, auth_headers):
+    response = client.get(
+        "/leads?offset=-1",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
-    
-    
+
+
 def test_get_lead_by_id(client):
     client.post(
         "/leads",
@@ -178,8 +205,8 @@ def test_get_lead_by_id(client):
     assert data["name"] == "Jan Kowalski"
     assert data["category"] == "sklep internetowy"
     assert data["priority"] == "high"
-    
-    
+
+
 def test_get_lead_by_id_returns_404_for_missing_lead(client):
     response = client.get("/leads/999")
 
@@ -188,8 +215,8 @@ def test_get_lead_by_id_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
-    
-    
+
+
 def test_delete_lead(client):
     client.post(
         "/leads",
@@ -211,8 +238,8 @@ def test_delete_lead(client):
     get_response = client.get("/leads/1")
 
     assert get_response.status_code == 404
-    
-    
+
+
 def test_delete_lead_returns_404_for_missing_lead(client):
     response = client.delete("/leads/999")
 
@@ -221,8 +248,8 @@ def test_delete_lead_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
-    
-    
+
+
 def test_update_lead(client):
     client.post(
         "/leads",
@@ -251,8 +278,8 @@ def test_update_lead(client):
     assert data["message"] == "Potrzebuję sklepu internetowego pilnie"
     assert data["category"] == "sklep internetowy"
     assert data["priority"] == "high"
-    
-    
+
+
 def test_update_lead_returns_404_for_missing_lead(client):
     response = client.put(
         "/leads/999",
@@ -268,8 +295,8 @@ def test_update_lead_returns_404_for_missing_lead(client):
     data = response.json()
 
     assert data["detail"] == "Lead nie został znaleziony"
-    
-    
+
+
 def test_get_stats(client):
     client.post(
         "/leads",
@@ -300,9 +327,9 @@ def test_get_stats(client):
     assert data["normal_priority"] == 1
     assert data["categories"]["sklep internetowy"] == 1
     assert data["categories"]["strona internetowa"] == 1
-    
-    
-def test_filter_leads_by_search(client):
+
+
+def test_filter_leads_by_search(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -321,7 +348,10 @@ def test_filter_leads_by_search(client):
         }
     )
 
-    response = client.get("/leads?search=sklep")
+    response = client.get(
+        "/leads?search=sklep",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -330,9 +360,9 @@ def test_filter_leads_by_search(client):
     assert len(data) == 1
     assert data[0]["name"] == "Anna"
     assert data[0]["category"] == "sklep internetowy"
-    
-    
-def test_sort_leads_by_newest(client):
+
+
+def test_sort_leads_by_newest(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -351,7 +381,10 @@ def test_sort_leads_by_newest(client):
         }
     )
 
-    response = client.get("/leads?sort=newest")
+    response = client.get(
+        "/leads?sort=newest",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -360,9 +393,9 @@ def test_sort_leads_by_newest(client):
     assert len(data) == 2
     assert data[0]["name"] == "Piotr"
     assert data[1]["name"] == "Anna"
-    
-    
-def test_sort_leads_by_oldest(client):
+
+
+def test_sort_leads_by_oldest(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -381,7 +414,10 @@ def test_sort_leads_by_oldest(client):
         }
     )
 
-    response = client.get("/leads?sort=oldest")
+    response = client.get(
+        "/leads?sort=oldest",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -390,27 +426,36 @@ def test_sort_leads_by_oldest(client):
     assert len(data) == 2
     assert data[0]["name"] == "Anna"
     assert data[1]["name"] == "Piotr"
-    
-    
-def test_invalid_category(client):
-    response = client.get("/leads?category=nieistniejaca")
+
+
+def test_invalid_category(client, auth_headers):
+    response = client.get(
+        "/leads?category=nieistniejaca",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
-    
-    
-def test_search_too_short(client):
-    response = client.get("/leads?search=a")
+
+
+def test_search_too_short(client, auth_headers):
+    response = client.get(
+        "/leads?search=a",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
-    
-    
-def test_invalid_sort(client):
-    response = client.get("/leads?sort=invalid")
+
+
+def test_invalid_sort(client, auth_headers):
+    response = client.get(
+        "/leads?sort=invalid",
+        headers=auth_headers
+    )
 
     assert response.status_code == 422
-    
-    
-def test_search_lead_by_name(client):
+
+
+def test_search_lead_by_name(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -420,7 +465,10 @@ def test_search_lead_by_name(client):
         }
     )
 
-    response = client.get("/leads?search=Anna")
+    response = client.get(
+        "/leads?search=Anna",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -428,9 +476,9 @@ def test_search_lead_by_name(client):
 
     assert len(data) == 1
     assert data[0]["name"] == "Anna Kowalska"
-    
-    
-def test_search_lead_by_email(client):
+
+
+def test_search_lead_by_email(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -440,7 +488,10 @@ def test_search_lead_by_email(client):
         }
     )
 
-    response = client.get("/leads?search=piotr@example.com")
+    response = client.get(
+        "/leads?search=piotr@example.com",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -448,9 +499,9 @@ def test_search_lead_by_email(client):
 
     assert len(data) == 1
     assert data[0]["email"] == "piotr@example.com"
-    
-    
-def test_search_lead_is_case_insensitive(client):
+
+
+def test_search_lead_is_case_insensitive(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -460,7 +511,10 @@ def test_search_lead_is_case_insensitive(client):
         }
     )
 
-    response = client.get("/leads?search=ANNA")
+    response = client.get(
+        "/leads?search=ANNA",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -468,9 +522,9 @@ def test_search_lead_is_case_insensitive(client):
 
     assert len(data) == 1
     assert data[0]["name"] == "Anna Kowalska"
-    
-    
-def test_search_with_priority_filter(client):
+
+
+def test_search_with_priority_filter(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -490,7 +544,8 @@ def test_search_with_priority_filter(client):
     )
 
     response = client.get(
-        "/leads?search=sklep&priority=high"
+        "/leads?search=sklep&priority=high",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -500,9 +555,9 @@ def test_search_with_priority_filter(client):
     assert len(data) == 1
     assert data[0]["name"] == "Anna"
     assert data[0]["priority"] == "high"
-    
-    
-def test_search_with_category_filter(client):
+
+
+def test_search_with_category_filter(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -522,7 +577,8 @@ def test_search_with_category_filter(client):
     )
 
     response = client.get(
-        "/leads?search=Potrzebuję&category=sklep%20internetowy"
+        "/leads?search=Potrzebuję&category=sklep%20internetowy",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -532,9 +588,9 @@ def test_search_with_category_filter(client):
     assert len(data) == 1
     assert data[0]["name"] == "Anna"
     assert data[0]["category"] == "sklep internetowy"
-    
-    
-def test_filter_leads_by_created_from(client):
+
+
+def test_filter_leads_by_created_from(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -554,17 +610,18 @@ def test_filter_leads_by_created_from(client):
     )
 
     response = client.get(
-        "/leads?created_from=2026-09-24"
+        "/leads?created_from=2026-09-24",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
-    
+
     data = response.json()
 
     assert len(data) == 2
-    
-    
-def test_filter_leads_by_created_to(client):
+
+
+def test_filter_leads_by_created_to(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -584,7 +641,8 @@ def test_filter_leads_by_created_to(client):
     )
 
     response = client.get(
-        "/leads?created_to=2026-09-25"
+        "/leads?created_to=2026-09-25",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -592,9 +650,9 @@ def test_filter_leads_by_created_to(client):
     data = response.json()
 
     assert len(data) == 2
-    
-    
-def test_filter_leads_by_created_date_range(client):
+
+
+def test_filter_leads_by_created_date_range(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -614,7 +672,8 @@ def test_filter_leads_by_created_date_range(client):
     )
 
     response = client.get(
-        "/leads?created_from=2026-09-24&created_to=2026-09-25"
+        "/leads?created_from=2026-09-24&created_to=2026-09-25",
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -622,33 +681,36 @@ def test_filter_leads_by_created_date_range(client):
     data = response.json()
 
     assert len(data) == 2
-    
-    
-def test_invalid_created_from(client):
+
+
+def test_invalid_created_from(client, auth_headers):
     response = client.get(
-        "/leads?created_from=abc"
+        "/leads?created_from=abc",
+        headers=auth_headers
     )
 
     assert response.status_code == 422
-    
-    
-def test_invalid_created_to(client):
+
+
+def test_invalid_created_to(client, auth_headers):
     response = client.get(
-        "/leads?created_to=abc"
+        "/leads?created_to=abc",
+        headers=auth_headers
     )
 
     assert response.status_code == 422
-    
-    
-def test_invalid_created_date_range(client):
+
+
+def test_invalid_created_date_range(client, auth_headers):
     response = client.get(
-        "/leads?created_from=2026-09-25&created_to=2026-09-24"
+        "/leads?created_from=2026-09-25&created_to=2026-09-24",
+        headers=auth_headers
     )
 
     assert response.status_code == 422
-    
-    
-def test_update_lead_status(client):
+
+
+def test_update_lead_status(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -658,7 +720,10 @@ def test_update_lead_status(client):
         }
     )
 
-    response = client.get("/leads")
+    response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -677,9 +742,9 @@ def test_update_lead_status(client):
     data = response.json()
 
     assert data["status"] == "contacted"
-    
-    
-def test_invalid_lead_status(client):
+
+
+def test_invalid_lead_status(client, auth_headers):
     response = client.post(
         "/leads",
         json={
@@ -689,7 +754,10 @@ def test_invalid_lead_status(client):
         }
     )
 
-    response = client.get("/leads")
+    response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -704,8 +772,8 @@ def test_invalid_lead_status(client):
     )
 
     assert response.status_code == 422
-    
-    
+
+
 def test_update_status_for_missing_lead(client):
     response = client.patch(
         "/leads/9999/status",
@@ -715,8 +783,8 @@ def test_update_status_for_missing_lead(client):
     )
 
     assert response.status_code == 404
-    
-    
+
+
 def test_register_user(client):
     response = client.post(
         "/register",
@@ -732,8 +800,8 @@ def test_register_user(client):
 
     assert data["username"] == "testuser"
     assert data["message"] == "Użytkownik został utworzony"
-    
-    
+
+
 def test_login_user(client):
     client.post(
         "/register",
@@ -759,8 +827,8 @@ def test_login_user(client):
     assert data["message"] == "Logowanie zakończone pomyślnie"
     assert "access_token" in data
     assert isinstance(data["access_token"], str)
-    
-    
+
+
 def test_login_with_wrong_password(client):
     client.post(
         "/register",
@@ -779,8 +847,8 @@ def test_login_with_wrong_password(client):
     )
 
     assert response.status_code == 401
-    
-    
+
+
 def test_login_with_unknown_user(client):
     response = client.post(
         "/login",
@@ -791,15 +859,15 @@ def test_login_with_unknown_user(client):
     )
 
     assert response.status_code == 401
-    
-    
+
+
 def test_create_access_token():
     token = create_access_token({"sub": "admin"})
 
     assert token is not None
     assert isinstance(token, str)
-    
-    
+
+
 def test_get_current_user():
     token = create_access_token({"sub": "admin"})
 

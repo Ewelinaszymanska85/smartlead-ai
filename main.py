@@ -1,8 +1,7 @@
 from datetime import date, timedelta
-
 from typing import Literal
 
-from fastapi import FastAPI, Depends, Query, HTTPException
+from fastapi import FastAPI, Depends, Query, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -22,13 +21,35 @@ from app import db_models
 from app import user_models
 from app.user_models import UserDB
 from app.db_models import LeadDB
-from app.jwt import create_access_token
+from app.jwt import create_access_token, get_current_user
 
 
 Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()
+
+
+def get_current_user_from_token(
+    authorization: str = Header(...)
+):
+    parts = authorization.split()
+
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(
+            status_code=401,
+            detail="Nieprawidłowy token"
+        )
+
+    token = parts[1]
+
+    try:
+        return get_current_user(token)
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Nieprawidłowy lub wygasły token"
+        )
 
 
 @app.get("/")
@@ -53,8 +74,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         "message": "Użytkownik został utworzony",
         "username": new_user.username
     }
-    
-    
+
+
 @app.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
     existing_user = db.query(UserDB).filter(
@@ -106,10 +127,11 @@ def create_lead(lead: Lead, db: Session = Depends(get_db)):
         "lead": lead,
         "analysis": analysis
     }
-    
-    
+
+
 @app.get("/leads", response_model=list[LeadDBResponse])
 def get_leads(
+    current_user: str = Depends(get_current_user_from_token),
     priority: Literal["normal", "high"] | None = None,
     category: Literal[
         "sklep internetowy",
@@ -126,7 +148,7 @@ def get_leads(
     db: Session = Depends(get_db)
 ):
     query = db.query(LeadDB)
-    
+
     if created_from and created_to and created_from > created_to:
         raise HTTPException(
             status_code=422,
@@ -138,10 +160,65 @@ def get_leads(
 
     if category:
         query = query.filter(LeadDB.category == category)
-        
+
     if created_from:
         query = query.filter(LeadDB.created_at >= created_from)
-        
+
+    if created_to:
+        created_to_next_day = created_to + timedelta(days=1)
+        query = query.filter(LeadDB.created_at < created_to_next_day)
+
+    if search:
+        query = query.filter(
+            LeadDB.name.ilike(f"%{search}%")
+            | LeadDB.email.ilike(f"%{search}%")
+            | LeadDB.message.ilike(f"%{search}%")
+        )
+
+    if sort == "newest":
+        query = query.order_by(LeadDB.id.desc())
+    elif sort == "oldest":
+        query = query.order_by(LeadDB.id.asc())
+
+    query = query.offset(offset).limit(limit)
+
+    return query.all()
+
+@app.get("/leads", response_model=list[LeadDBResponse])
+def get_leads(
+    current_user: str = Depends(get_current_user_from_token),
+    priority: Literal["normal", "high"] | None = None,
+    category: Literal[
+        "sklep internetowy",
+        "aplikacja mobilna",
+        "strona internetowa",
+        "inne"
+    ] | None = None,
+    search: str | None = Query(None, min_length=2),
+    sort: Literal["newest", "oldest"] | None = None,
+    created_from: date | None = None,
+    created_to: date | None = None,
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+):
+    query = db.query(LeadDB)
+
+    if created_from and created_to and created_from > created_to:
+        raise HTTPException(
+            status_code=422,
+            detail="Data początkowa nie może być późniejsza niż data końcowa"
+        )
+
+    if priority:
+        query = query.filter(LeadDB.priority == priority)
+
+    if category:
+        query = query.filter(LeadDB.category == category)
+
+    if created_from:
+        query = query.filter(LeadDB.created_at >= created_from)
+
     if created_to:
         created_to_next_day = created_to + timedelta(days=1)
         query = query.filter(LeadDB.created_at < created_to_next_day)
@@ -211,29 +288,6 @@ def get_lead(lead_id: int, db: Session = Depends(get_db)):
     return lead
 
 
-@app.get("/leads/{lead_id}", response_model=LeadDBResponse)
-def get_lead(lead_id: int, db: Session = Depends(get_db)):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        return {"detail": "Lead nie został znaleziony"}
-
-    return lead
-
-
-@app.get("/leads/{lead_id}", response_model=LeadDBResponse)
-def get_lead(lead_id: int, db: Session = Depends(get_db)):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
-
-    return lead
-
-
 @app.delete("/leads/{lead_id}")
 def delete_lead(lead_id: int, db: Session = Depends(get_db)):
     lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
@@ -270,6 +324,7 @@ def update_lead(
     db.refresh(existing_lead)
 
     return existing_lead
+
 
 @app.patch("/leads/{lead_id}/status", response_model=LeadDBResponse)
 def update_lead_status(

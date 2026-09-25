@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.database import Base, get_db
 from main import app
+from app.jwt import create_access_token
 
 
 TEST_DATABASE_URL = "sqlite:///./test_smartlead.db"
@@ -47,3 +48,12 @@ def client(db):
     yield TestClient(app)
 
     app.dependency_overrides.clear()
+    
+    
+@pytest.fixture
+def auth_headers():
+    token = create_access_token({"sub": "admin"})
+
+    return {
+        "Authorization": f"Bearer {token}"
+    }
