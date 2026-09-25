@@ -22,3 +22,18 @@ def create_access_token(data: dict):
         SECRET_KEY,
         algorithm=ALGORITHM
     )
+    
+    
+def get_current_user(token: str):
+    payload = jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=[ALGORITHM]
+    )
+
+    username = payload.get("sub")
+
+    if username is None:
+        raise ValueError("Nieprawidłowy token")
+
+    return username

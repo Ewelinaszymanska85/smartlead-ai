@@ -1,5 +1,5 @@
 from app.services import analyze_lead
-from app.jwt import create_access_token
+from app.jwt import create_access_token, get_current_user
 from pydantic import ValidationError
 from app.models import LeadAnalysis
 
@@ -798,3 +798,11 @@ def test_create_access_token():
 
     assert token is not None
     assert isinstance(token, str)
+    
+    
+def test_get_current_user():
+    token = create_access_token({"sub": "admin"})
+
+    username = get_current_user(token)
+
+    assert username == "admin"
