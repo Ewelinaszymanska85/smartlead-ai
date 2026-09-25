@@ -237,7 +237,10 @@ def test_delete_lead(client, auth_headers):
         }
     )
 
-    response = client.delete("/leads/1")
+    response = client.delete(
+    "/leads/1",
+    headers=auth_headers
+)
 
     assert response.status_code == 200
 
@@ -253,8 +256,14 @@ def test_delete_lead(client, auth_headers):
     assert get_response.status_code == 404
 
 
-def test_delete_lead_returns_404_for_missing_lead(client):
-    response = client.delete("/leads/999")
+def test_delete_lead_returns_404_for_missing_lead(
+    client,
+    auth_headers
+):
+    response = client.delete(
+    "/leads/999",
+    headers=auth_headers
+)
 
     assert response.status_code == 404
 
