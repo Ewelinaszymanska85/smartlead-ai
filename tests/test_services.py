@@ -63,14 +63,17 @@ def test_get_leads_endpoint(client, auth_headers):
 
 
 def test_get_leads_filters_by_priority(client, auth_headers):
-    client.post(
+    create_response = client.post(
         "/leads",
         json={
             "name": "Jan Kowalski",
             "email": "jan@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
-        }
+        },
+        headers=auth_headers
     )
+
+    assert create_response.status_code == 200
 
     response = client.get(
         "/leads?priority=high",
@@ -101,7 +104,8 @@ def test_get_leads_filters_by_priority_and_category(client, auth_headers):
             "name": "Jan Kowalski",
             "email": "jan@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -110,7 +114,8 @@ def test_get_leads_filters_by_priority_and_category(client, auth_headers):
             "name": "Anna Nowak",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -135,7 +140,8 @@ def test_get_leads_supports_pagination(client, auth_headers):
             "name": "Jan Kowalski",
             "email": "jan@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -144,7 +150,8 @@ def test_get_leads_supports_pagination(client, auth_headers):
             "name": "Anna Nowak",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -153,7 +160,8 @@ def test_get_leads_supports_pagination(client, auth_headers):
             "name": "Piotr Nowak",
             "email": "piotr@example.com",
             "message": "Potrzebuję aplikacji mobilnej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -193,7 +201,8 @@ def test_get_lead_by_id(client, auth_headers):
             "name": "Jan Kowalski",
             "email": "jan@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -234,7 +243,8 @@ def test_delete_lead(client, auth_headers):
             "name": "Piotr Testowy",
             "email": "piotr@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.delete(
@@ -279,7 +289,8 @@ def test_update_lead(client, auth_headers):
             "name": "Anna Testowa",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.put(
@@ -331,6 +342,10 @@ def test_get_stats(client):
             "name": "Anna Testowa",
             "email": "anna@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
+        },
+        headers={
+            "Authorization": "Bearer "
+            + create_access_token({"sub": "admin"})
         }
     )
 
@@ -340,6 +355,10 @@ def test_get_stats(client):
             "name": "Piotr Testowy",
             "email": "piotr@example.com",
             "message": "Potrzebuję strony internetowej"
+        },
+        headers={
+            "Authorization": "Bearer "
+            + create_access_token({"sub": "admin"})
         }
     )
 
@@ -363,7 +382,8 @@ def test_filter_leads_by_search(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -372,7 +392,8 @@ def test_filter_leads_by_search(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -396,7 +417,8 @@ def test_sort_leads_by_newest(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -405,7 +427,8 @@ def test_sort_leads_by_newest(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -429,7 +452,8 @@ def test_sort_leads_by_oldest(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -438,7 +462,8 @@ def test_sort_leads_by_oldest(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -489,7 +514,8 @@ def test_search_lead_by_name(client, auth_headers):
             "name": "Anna Kowalska",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -512,7 +538,8 @@ def test_search_lead_by_email(client, auth_headers):
             "name": "Piotr Nowak",
             "email": "piotr@example.com",
             "message": "Chcę aplikację mobilną"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -535,7 +562,8 @@ def test_search_lead_is_case_insensitive(client, auth_headers):
             "name": "Anna Kowalska",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -558,7 +586,8 @@ def test_search_with_priority_filter(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -567,7 +596,8 @@ def test_search_with_priority_filter(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -591,7 +621,8 @@ def test_search_with_category_filter(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -600,7 +631,8 @@ def test_search_with_category_filter(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -624,7 +656,8 @@ def test_filter_leads_by_created_from(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -633,7 +666,8 @@ def test_filter_leads_by_created_from(client, auth_headers):
             "name": "Piotr",
             "email": "piotr@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -655,7 +689,8 @@ def test_filter_leads_by_created_to(client, auth_headers):
             "name": "Kasia",
             "email": "kasia@example.com",
             "message": "Potrzebuję aplikacji mobilnej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -664,7 +699,8 @@ def test_filter_leads_by_created_to(client, auth_headers):
             "name": "Marek",
             "email": "marek@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -686,7 +722,8 @@ def test_filter_leads_by_created_date_range(client, auth_headers):
             "name": "Ola",
             "email": "ola@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     client.post(
@@ -695,7 +732,8 @@ def test_filter_leads_by_created_date_range(client, auth_headers):
             "name": "Tomek",
             "email": "tomek@example.com",
             "message": "Potrzebuję sklepu internetowego"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -744,7 +782,8 @@ def test_update_lead_status(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
 
     response = client.get(
@@ -778,8 +817,11 @@ def test_invalid_lead_status(client, auth_headers):
             "name": "Anna",
             "email": "anna@example.com",
             "message": "Potrzebuję strony internetowej"
-        }
+        },
+        headers=auth_headers
     )
+
+    assert response.status_code == 200
 
     response = client.get(
         "/leads",

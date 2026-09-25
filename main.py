@@ -106,7 +106,11 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
 
 @app.post("/leads", response_model=LeadResponse)
-def create_lead(lead: Lead, db: Session = Depends(get_db)):
+def create_lead(
+    lead: Lead,
+    current_user: str = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
     analysis = analyze_lead(lead.message)
 
     lead_db = LeadDB(
