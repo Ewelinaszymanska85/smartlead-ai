@@ -22,6 +22,7 @@ from app import db_models
 from app import user_models
 from app.user_models import UserDB
 from app.db_models import LeadDB
+from app.jwt import create_access_token
 
 
 Base.metadata.create_all(bind=engine)
@@ -72,9 +73,14 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             detail="Nieprawidłowa nazwa użytkownika lub hasło"
         )
 
+    access_token = create_access_token({
+        "sub": existing_user.username
+    })
+
     return {
         "message": "Logowanie zakończone pomyślnie",
-        "username": existing_user.username
+        "username": existing_user.username,
+        "access_token": access_token
     }
 
 

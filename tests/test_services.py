@@ -757,6 +757,8 @@ def test_login_user(client):
 
     assert data["username"] == "loginuser"
     assert data["message"] == "Logowanie zakończone pomyślnie"
+    assert "access_token" in data
+    assert isinstance(data["access_token"], str)
     
     
 def test_login_with_wrong_password(client):
