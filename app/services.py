@@ -12,21 +12,29 @@ def analyze_lead(message: str):
         category = "strona internetowa"
     else:
         category = "inne"
-        
+
+    score = 0
+
     if "pilnie" in message or "jak najszybciej" in message or "na już" in message:
         priority = "high"
-        score = 30
+        score += 30
     else:
         priority = "normal"
-        score = 0
+
+    if category == "sklep internetowy":
+        score += 20
+    elif category == "aplikacja mobilna":
+        score += 15
+    elif category == "strona internetowa":
+        score += 10
 
     return LeadAnalysis(
         category=category,
         priority=priority,
         score=score
     )
-    
-    
+
+
 def prepare_lead_update(lead, existing_lead):
     analysis = analyze_lead(lead.message)
 
