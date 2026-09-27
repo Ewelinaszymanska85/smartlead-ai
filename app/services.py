@@ -27,6 +27,9 @@ def analyze_lead(message: str):
         score += 15
     elif category == "strona internetowa":
         score += 10
+        
+    if len(message.split()) >= 8:
+        score += 5
 
     return LeadAnalysis(
         category=category,

@@ -13,6 +13,14 @@ def test_analyze_lead_detects_category_and_high_priority():
     assert result.priority == "high"
 
 
+def test_analyze_lead_adds_score_for_long_message():
+    result = analyze_lead(
+    "Potrzebuję nowoczesnej strony internetowej dla mojej firmy firmowej"
+)
+
+    assert result.score == 15
+
+
 def test_analyze_lead_detects_normal_priority():
     result = analyze_lead("Potrzebuję strony internetowej")
 
