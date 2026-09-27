@@ -15,14 +15,16 @@ def analyze_lead(message: str):
         
     if "pilnie" in message or "jak najszybciej" in message or "na już" in message:
         priority = "high"
+        score = 30
     else:
         priority = "normal"
+        score = 0
 
     return LeadAnalysis(
         category=category,
         priority=priority,
-        score=50
-    ) 
+        score=score
+    )
     
     
 def prepare_lead_update(lead, existing_lead):
