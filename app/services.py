@@ -20,7 +20,8 @@ def analyze_lead(message: str):
 
     return LeadAnalysis(
         category=category,
-        priority=priority
+        priority=priority,
+        score=50
     ) 
     
     

@@ -13,6 +13,7 @@ class Lead(BaseModel):
 class LeadAnalysis(BaseModel):
     category: str
     priority: Literal["normal", "high"]
+    score: int
 
 
 class LeadResponse(BaseModel):

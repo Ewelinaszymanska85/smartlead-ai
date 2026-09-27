@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.services import analyze_lead
 from app.jwt import create_access_token, get_current_user
 from pydantic import ValidationError
@@ -703,8 +705,10 @@ def test_filter_leads_by_created_to(client, auth_headers):
         headers=auth_headers
     )
 
+    today = date.today()
+
     response = client.get(
-        "/leads?created_to=2026-09-25",
+        f"/leads?created_to={today}",
         headers=auth_headers
     )
 
@@ -736,8 +740,10 @@ def test_filter_leads_by_created_date_range(client, auth_headers):
         headers=auth_headers
     )
 
+    today = date.today()
+
     response = client.get(
-        "/leads?created_from=2026-09-24&created_to=2026-09-25",
+        f"/leads?created_from={today}&created_to={today}",
         headers=auth_headers
     )
 
