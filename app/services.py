@@ -31,10 +31,18 @@ def analyze_lead(message: str):
     if len(message.split()) >= 8:
         score += 5
 
+    if score >= 40:
+        lead_level = "high"
+    elif score >= 20:
+        lead_level = "medium"
+    else:
+        lead_level = "low"
+
     return LeadAnalysis(
         category=category,
         priority=priority,
-        score=score
+        score=score,
+        lead_level=lead_level
     )
 
 

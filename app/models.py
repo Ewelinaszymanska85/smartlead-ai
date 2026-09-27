@@ -14,7 +14,7 @@ class LeadAnalysis(BaseModel):
     category: str
     priority: Literal["normal", "high"]
     score: int
-
+    lead_level: Literal["low", "medium", "high"]
 
 class LeadResponse(BaseModel):
     message: str

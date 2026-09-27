@@ -957,3 +957,12 @@ def test_get_current_user():
     username = get_current_user(token)
 
     assert username == "admin"
+    
+    
+def test_analyze_lead_calculates_lead_level():
+    result = analyze_lead(
+        "Potrzebuję pilnie nowoczesnego sklepu internetowego dla mojej firmy"
+    )
+
+    assert result.score == 55
+    assert result.lead_level == "high"
