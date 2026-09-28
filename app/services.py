@@ -54,5 +54,7 @@ def prepare_lead_update(lead, existing_lead):
     existing_lead.message = lead.message
     existing_lead.category = analysis.category
     existing_lead.priority = analysis.priority
+    existing_lead.score = analysis.score
+    existing_lead.lead_level = analysis.lead_level
 
     return existing_lead

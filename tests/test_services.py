@@ -322,6 +322,8 @@ def test_update_lead(client, auth_headers):
     assert data["message"] == "Potrzebuję sklepu internetowego pilnie"
     assert data["category"] == "sklep internetowy"
     assert data["priority"] == "high"
+    assert data["score"] == 50
+    assert data["lead_level"] == "high"
 
 
 def test_update_lead_returns_404_for_missing_lead(
