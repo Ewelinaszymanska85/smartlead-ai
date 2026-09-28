@@ -1,13 +1,16 @@
 from datetime import date
 
-from app.services import analyze_lead
-from app.jwt import create_access_token, get_current_user
 from pydantic import ValidationError
+
+from app.jwt import create_access_token, get_current_user
 from app.models import LeadAnalysis
+from app.services import analyze_lead
 
 
 def test_analyze_lead_detects_category_and_high_priority():
-    result = analyze_lead("Potrzebuję sklepu internetowego pilnie")
+    result = analyze_lead(
+        "Potrzebuję sklepu internetowego pilnie"
+    )
 
     assert result.category == "sklep internetowy"
     assert result.priority == "high"
@@ -15,14 +18,16 @@ def test_analyze_lead_detects_category_and_high_priority():
 
 def test_analyze_lead_adds_score_for_long_message():
     result = analyze_lead(
-    "Potrzebuję nowoczesnej strony internetowej dla mojej firmy firmowej"
-)
+        "Potrzebuję nowoczesnej strony internetowej dla mojej firmy firmowej"
+    )
 
     assert result.score == 15
 
 
 def test_analyze_lead_detects_normal_priority():
-    result = analyze_lead("Potrzebuję strony internetowej")
+    result = analyze_lead(
+        "Potrzebuję strony internetowej"
+    )
 
     assert result.category == "strona internetowa"
     assert result.priority == "normal"
@@ -347,7 +352,7 @@ def test_update_lead_returns_404_for_missing_lead(
     assert data["detail"] == "Lead nie został znaleziony"
 
 
-def test_get_stats(client):
+def test_get_stats(client, auth_headers):
     client.post(
         "/leads",
         json={
@@ -355,10 +360,7 @@ def test_get_stats(client):
             "email": "anna@example.com",
             "message": "Potrzebuję sklepu internetowego pilnie"
         },
-        headers={
-            "Authorization": "Bearer "
-            + create_access_token({"sub": "admin"})
-        }
+        headers=auth_headers
     )
 
     client.post(
@@ -368,13 +370,13 @@ def test_get_stats(client):
             "email": "piotr@example.com",
             "message": "Potrzebuję strony internetowej"
         },
-        headers={
-            "Authorization": "Bearer "
-            + create_access_token({"sub": "admin"})
-        }
+        headers=auth_headers
     )
 
-    response = client.get("/stats")
+    response = client.get(
+        "/stats",
+        headers=auth_headers
+    )
 
     assert response.status_code == 200
 
@@ -797,7 +799,7 @@ def test_update_lead_status(client, auth_headers):
         json={
             "name": "Anna",
             "email": "anna@example.com",
-            "message": "Potrzebuję strony internetowej"
+            "message": "Potrzebuję sklepu internetowego"
         },
         headers=auth_headers
     )
@@ -816,7 +818,8 @@ def test_update_lead_status(client, auth_headers):
         f"/leads/{lead_id}/status",
         json={
             "status": "contacted"
-        }
+        },
+        headers=auth_headers
     )
 
     assert response.status_code == 200
@@ -853,18 +856,20 @@ def test_invalid_lead_status(client, auth_headers):
         f"/leads/{lead_id}/status",
         json={
             "status": "xyz"
-        }
+        },
+        headers=auth_headers
     )
 
     assert response.status_code == 422
 
 
-def test_update_status_for_missing_lead(client):
+def test_update_status_for_missing_lead(client, auth_headers):
     response = client.patch(
         "/leads/9999/status",
         json={
             "status": "contacted"
-        }
+        },
+        headers=auth_headers
     )
 
     assert response.status_code == 404
@@ -959,8 +964,8 @@ def test_get_current_user():
     username = get_current_user(token)
 
     assert username == "admin"
-    
-    
+
+
 def test_analyze_lead_calculates_lead_level():
     result = analyze_lead(
         "Potrzebuję pilnie nowoczesnego sklepu internetowego dla mojej firmy"
@@ -968,8 +973,8 @@ def test_analyze_lead_calculates_lead_level():
 
     assert result.score == 55
     assert result.lead_level == "high"
-    
-    
+
+
 def test_create_lead_saves_score_and_lead_level(client, auth_headers):
     response = client.post(
         "/leads",
@@ -977,7 +982,10 @@ def test_create_lead_saves_score_and_lead_level(client, auth_headers):
         json={
             "name": "Anna",
             "email": "anna@example.com",
-            "message": "Potrzebuję pilnie nowoczesnego sklepu internetowego dla mojej firmy"
+            "message": (
+                "Potrzebuję pilnie nowoczesnego sklepu "
+                "internetowego dla mojej firmy"
+            )
         }
     )
 
@@ -995,63 +1003,12 @@ def test_create_lead_saves_score_and_lead_level(client, auth_headers):
     assert len(leads) == 1
     assert leads[0]["score"] == 55
     assert leads[0]["lead_level"] == "high"
-    
-    
-def test_get_stats(client, auth_headers):
-    response = client.post(
-        "/leads",
-        headers=auth_headers,
-        json={
-            "name": "Anna",
-            "email": "anna@example.com",
-            "message": "Potrzebuję pilnie sklepu internetowego"
-        }
-    )
 
-    assert response.status_code == 200
 
-    response = client.get(
-        "/stats"
-    )
-
-    assert response.status_code == 200
-
-    stats = response.json()
-
-    assert stats["total"] == 1
-    assert stats["high_priority"] == 1
-    assert stats["normal_priority"] == 0
-    assert stats["categories"]["sklep internetowy"] == 1
-    
-    
-def test_update_lead_status(client, auth_headers):
-    client.post(
-        "/leads",
-        json={
-            "name": "Anna",
-            "email": "anna@example.com",
-            "message": "Potrzebuję sklepu internetowego"
-        },
-        headers=auth_headers
-    )
-
-    response = client.patch(
-        "/leads/1/status",
-        json={
-            "status": "contacted"
-        }
-    )
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["status"] == "contacted"
-    assert data["name"] == "Anna"
-    assert data["category"] == "sklep internetowy"
-    
-    
-def test_update_lead_status_rejects_invalid_status(client, auth_headers):
+def test_update_lead_status_rejects_invalid_status(
+    client,
+    auth_headers
+):
     client.post(
         "/leads",
         json={
@@ -1066,7 +1023,8 @@ def test_update_lead_status_rejects_invalid_status(client, auth_headers):
         "/leads/1/status",
         json={
             "status": "invalid"
-        }
+        },
+        headers=auth_headers
     )
 
     assert response.status_code == 422

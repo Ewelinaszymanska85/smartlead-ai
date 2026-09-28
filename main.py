@@ -187,7 +187,10 @@ def get_leads(
 
 
 @app.get("/stats", response_model=LeadStats)
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(
+    current_user: str = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db)
+):
     total = db.query(LeadDB).count()
 
     high_priority = (
