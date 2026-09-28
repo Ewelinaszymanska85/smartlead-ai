@@ -993,3 +993,30 @@ def test_create_lead_saves_score_and_lead_level(client, auth_headers):
     assert len(leads) == 1
     assert leads[0]["score"] == 55
     assert leads[0]["lead_level"] == "high"
+    
+    
+def test_get_stats(client, auth_headers):
+    response = client.post(
+        "/leads",
+        headers=auth_headers,
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję pilnie sklepu internetowego"
+        }
+    )
+
+    assert response.status_code == 200
+
+    response = client.get(
+        "/stats"
+    )
+
+    assert response.status_code == 200
+
+    stats = response.json()
+
+    assert stats["total"] == 1
+    assert stats["high_priority"] == 1
+    assert stats["normal_priority"] == 0
+    assert stats["categories"]["sklep internetowy"] == 1
