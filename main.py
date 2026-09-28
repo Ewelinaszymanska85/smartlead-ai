@@ -288,6 +288,7 @@ def update_lead(
 def update_lead_status(
     lead_id: int,
     status_update: LeadStatusUpdate,
+    current_user: str = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
     lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
