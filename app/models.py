@@ -30,6 +30,8 @@ class LeadDBResponse(BaseModel):
     message: str
     category: str
     priority: Literal["normal", "high"]
+    score: int
+    lead_level: Literal["low", "medium", "high"]
     status: Literal["new", "contacted", "in_progress", "closed"]
 
     model_config = {

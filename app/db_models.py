@@ -19,4 +19,6 @@ class LeadDB(Base):
     message = Column(Text, nullable=False)
     category = Column(String(100), nullable=False)
     priority = Column(String(20), nullable=False)
+    score = Column(Integer, nullable=False, default=0)
+    lead_level = Column(String(20), nullable=False, default="low")
     status = Column(String(20), nullable=False, default="new")

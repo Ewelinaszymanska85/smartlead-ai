@@ -966,3 +966,30 @@ def test_analyze_lead_calculates_lead_level():
 
     assert result.score == 55
     assert result.lead_level == "high"
+    
+    
+def test_create_lead_saves_score_and_lead_level(client, auth_headers):
+    response = client.post(
+        "/leads",
+        headers=auth_headers,
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję pilnie nowoczesnego sklepu internetowego dla mojej firmy"
+        }
+    )
+
+    assert response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+
+    assert len(leads) == 1
+    assert leads[0]["score"] == 55
+    assert leads[0]["lead_level"] == "high"

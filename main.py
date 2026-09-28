@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import FastAPI, Depends, Query, HTTPException, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -30,27 +31,21 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
+security = HTTPBearer()
+
+
 def get_current_user_from_token(
-    authorization: str = Header(...)
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    parts = authorization.split()
-
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(
-            status_code=401,
-            detail="Nieprawidłowy token"
-        )
-
-    token = parts[1]
+    token = credentials.credentials
 
     try:
         return get_current_user(token)
     except Exception:
         raise HTTPException(
             status_code=401,
-            detail="Nieprawidłowy lub wygasły token"
+            detail="Nieprawidłowy token"
         )
-
 
 @app.get("/")
 def home():
@@ -119,6 +114,8 @@ def create_lead(
         message=lead.message,
         category=analysis.category,
         priority=analysis.priority,
+        score=analysis.score,
+        lead_level=analysis.lead_level,
         status="new"
     )
 
