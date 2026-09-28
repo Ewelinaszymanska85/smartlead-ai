@@ -1022,3 +1022,30 @@ def test_get_stats(client, auth_headers):
     assert stats["high_priority"] == 1
     assert stats["normal_priority"] == 0
     assert stats["categories"]["sklep internetowy"] == 1
+    
+    
+def test_update_lead_status(client, auth_headers):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        },
+        headers=auth_headers
+    )
+
+    response = client.patch(
+        "/leads/1/status",
+        json={
+            "status": "contacted"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "contacted"
+    assert data["name"] == "Anna"
+    assert data["category"] == "sklep internetowy"
