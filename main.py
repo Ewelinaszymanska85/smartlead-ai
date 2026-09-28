@@ -185,61 +185,6 @@ def get_leads(
 
     return query.all()
 
-@app.get("/leads", response_model=list[LeadDBResponse])
-def get_leads(
-    current_user: str = Depends(get_current_user_from_token),
-    priority: Literal["normal", "high"] | None = None,
-    category: Literal[
-        "sklep internetowy",
-        "aplikacja mobilna",
-        "strona internetowa",
-        "inne"
-    ] | None = None,
-    search: str | None = Query(None, min_length=2),
-    sort: Literal["newest", "oldest"] | None = None,
-    created_from: date | None = None,
-    created_to: date | None = None,
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
-):
-    query = db.query(LeadDB)
-
-    if created_from and created_to and created_from > created_to:
-        raise HTTPException(
-            status_code=422,
-            detail="Data początkowa nie może być późniejsza niż data końcowa"
-        )
-
-    if priority:
-        query = query.filter(LeadDB.priority == priority)
-
-    if category:
-        query = query.filter(LeadDB.category == category)
-
-    if created_from:
-        query = query.filter(LeadDB.created_at >= created_from)
-
-    if created_to:
-        created_to_next_day = created_to + timedelta(days=1)
-        query = query.filter(LeadDB.created_at < created_to_next_day)
-
-    if search:
-        query = query.filter(
-            LeadDB.name.ilike(f"%{search}%")
-            | LeadDB.email.ilike(f"%{search}%")
-            | LeadDB.message.ilike(f"%{search}%")
-        )
-
-    if sort == "newest":
-        query = query.order_by(LeadDB.id.desc())
-    elif sort == "oldest":
-        query = query.order_by(LeadDB.id.asc())
-
-    query = query.offset(offset).limit(limit)
-
-    return query.all()
-
 
 @app.get("/stats", response_model=LeadStats)
 def get_stats(db: Session = Depends(get_db)):
