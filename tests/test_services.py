@@ -890,6 +890,30 @@ def test_register_user(client):
 
     assert data["username"] == "testuser"
     assert data["message"] == "Użytkownik został utworzony"
+    
+    
+def test_register_existing_user(client):
+    client.post(
+        "/register",
+        json={
+            "username": "testuser",
+            "password": "Test123"
+        }
+    )
+
+    response = client.post(
+        "/register",
+        json={
+            "username": "testuser",
+            "password": "Test123"
+        }
+    )
+
+    assert response.status_code == 409
+
+    data = response.json()
+
+    assert data["detail"] == "Użytkownik o tej nazwie już istnieje"
 
 
 def test_login_user(client):
