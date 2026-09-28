@@ -1049,3 +1049,24 @@ def test_update_lead_status(client, auth_headers):
     assert data["status"] == "contacted"
     assert data["name"] == "Anna"
     assert data["category"] == "sklep internetowy"
+    
+    
+def test_update_lead_status_rejects_invalid_status(client, auth_headers):
+    client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        },
+        headers=auth_headers
+    )
+
+    response = client.patch(
+        "/leads/1/status",
+        json={
+            "status": "invalid"
+        }
+    )
+
+    assert response.status_code == 422
