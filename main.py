@@ -54,6 +54,16 @@ def home():
 
 @app.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(UserDB).filter(
+        UserDB.username == user.username
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=409,
+            detail="Użytkownik o tej nazwie już istnieje"
+        )
+
     password_hash = hash_password(user.password)
 
     new_user = UserDB(
