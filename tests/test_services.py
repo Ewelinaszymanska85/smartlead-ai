@@ -880,7 +880,7 @@ def test_register_user(client):
         "/register",
         json={
             "username": "testuser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -890,14 +890,14 @@ def test_register_user(client):
 
     assert data["username"] == "testuser"
     assert data["message"] == "Użytkownik został utworzony"
-    
-    
+
+
 def test_register_existing_user(client):
     client.post(
         "/register",
         json={
             "username": "testuser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -905,7 +905,7 @@ def test_register_existing_user(client):
         "/register",
         json={
             "username": "testuser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -921,7 +921,7 @@ def test_login_user(client):
         "/register",
         json={
             "username": "loginuser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -929,7 +929,7 @@ def test_login_user(client):
         "/login",
         json={
             "username": "loginuser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -948,7 +948,7 @@ def test_login_with_wrong_password(client):
         "/register",
         json={
             "username": "wrongpassworduser",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
@@ -968,7 +968,7 @@ def test_login_with_unknown_user(client):
         "/login",
         json={
             "username": "nieistniejacy",
-            "password": "Test123"
+            "password": "Test1234"
         }
     )
 
