@@ -1052,3 +1052,27 @@ def test_update_lead_status_rejects_invalid_status(
     )
 
     assert response.status_code == 422
+    
+    
+def test_register_rejects_short_password(client):
+    response = client.post(
+        "/register",
+        json={
+            "username": "testuser",
+            "password": "Test12"
+        }
+    )
+
+    assert response.status_code == 422
+    
+    
+def test_register_rejects_short_username(client):
+    response = client.post(
+        "/register",
+        json={
+            "username": "ab",
+            "password": "Test1234"
+        }
+    )
+
+    assert response.status_code == 422
