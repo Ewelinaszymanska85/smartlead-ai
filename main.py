@@ -40,12 +40,29 @@ def get_current_user_from_token(
     token = credentials.credentials
 
     try:
-        return get_current_user(token)
+        user = get_current_user(token)
+        return user
     except Exception:
         raise HTTPException(
             status_code=401,
             detail="Nieprawidłowy token"
         )
+        
+        
+def require_role(*required_roles: str):
+    def role_checker(
+        current_user: dict = Depends(get_current_user_from_token)
+    ):
+        if current_user["role"] not in required_roles:
+            raise HTTPException(
+                status_code=403,
+                detail="Brak uprawnień"
+            )
+
+        return current_user
+
+    return role_checker
+        
 
 @app.get("/")
 def home():
@@ -200,7 +217,7 @@ def get_leads(
 
 @app.get("/stats", response_model=LeadStats)
 def get_stats(
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(require_role("admin", "sales")),
     db: Session = Depends(get_db)
 ):
     total = db.query(LeadDB).count()

@@ -52,7 +52,10 @@ def client(db):
     
 @pytest.fixture
 def auth_headers():
-    token = create_access_token({"sub": "admin"})
+    token = create_access_token({
+        "sub": "admin",
+        "role": "admin"
+    })
 
     return {
         "Authorization": f"Bearer {token}"

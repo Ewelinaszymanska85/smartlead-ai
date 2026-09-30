@@ -32,8 +32,12 @@ def get_current_user(token: str):
     )
 
     username = payload.get("sub")
+    role = payload.get("role")
 
     if username is None:
         raise ValueError("Nieprawidłowy token")
 
-    return username
+    return {
+        "username": username,
+        "role": role
+    }

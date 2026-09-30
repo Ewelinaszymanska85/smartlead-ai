@@ -387,6 +387,25 @@ def test_get_stats(client, auth_headers):
     assert data["normal_priority"] == 1
     assert data["categories"]["sklep internetowy"] == 1
     assert data["categories"]["strona internetowa"] == 1
+    
+    
+def test_get_stats_rejects_user_role(client):
+    token = create_access_token({
+        "sub": "ewelina",
+        "role": "user"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = client.get(
+        "/stats",
+        headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Brak uprawnień"
 
 
 def test_filter_leads_by_search(client, auth_headers):
@@ -983,12 +1002,15 @@ def test_create_access_token():
 
 
 def test_get_current_user():
-    token = create_access_token({"sub": "admin"})
+    token = create_access_token({
+        "sub": "admin",
+        "role": "admin"
+    })
 
-    username = get_current_user(token)
+    user = get_current_user(token)
 
-    assert username == "admin"
-
+    assert user["username"] == "admin"
+    assert user["role"] == "admin"
 
 def test_analyze_lead_calculates_lead_level():
     result = analyze_lead(
