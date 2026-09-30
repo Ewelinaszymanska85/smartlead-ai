@@ -68,7 +68,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
     new_user = UserDB(
         username=user.username,
-        password_hash=password_hash
+        password_hash=password_hash,
+        role="user"
     )
 
     db.add(new_user)
@@ -100,8 +101,9 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         )
 
     access_token = create_access_token({
-        "sub": existing_user.username
-    })
+    "sub": existing_user.username,
+    "role": existing_user.role
+})
 
     return {
         "message": "Logowanie zakończone pomyślnie",
