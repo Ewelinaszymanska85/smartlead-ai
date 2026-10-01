@@ -427,6 +427,25 @@ def test_delete_lead_rejects_user_role(client):
     assert response.json()["detail"] == "Brak uprawnień"
     
     
+def test_delete_lead_rejects_sales_role(client):
+    token = create_access_token({
+        "sub": "sales",
+        "role": "sales"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = client.delete(
+        "/leads/1",
+        headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Brak uprawnień"
+    
+    
 def test_delete_lead_allows_admin(client, auth_headers):
     create_response = client.post(
         "/leads",
