@@ -22,3 +22,16 @@ class LeadDB(Base):
     score = Column(Integer, nullable=False, default=0)
     lead_level = Column(String(20), nullable=False, default="low")
     status = Column(String(20), nullable=False, default="new")
+    
+    
+class LeadNoteDB(Base):
+    __tablename__ = "lead_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )

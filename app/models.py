@@ -64,3 +64,7 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    
+    
+class LeadNoteCreate(BaseModel):
+    content: str = Field(min_length=1)

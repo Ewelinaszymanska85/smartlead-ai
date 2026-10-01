@@ -1169,3 +1169,145 @@ def test_register_rejects_short_username(client):
     )
 
     assert response.status_code == 422
+    
+    
+def test_sales_can_create_lead_note(client):
+    token = create_access_token({
+        "sub": "sales",
+        "role": "sales"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    create_response = client.post(
+        "/leads",
+        json={
+            "name": "Anna",
+            "email": "anna@example.com",
+            "message": "Potrzebuję strony internetowej"
+        },
+        headers=headers
+    )
+
+    assert create_response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+
+    lead_id = leads[0]["id"]
+
+    note_response = client.post(
+        f"/leads/{lead_id}/notes",
+        json={
+            "content": "Klient zainteresowany. Oddzwonić jutro."
+        },
+        headers=headers
+    )
+
+    assert note_response.status_code == 200
+
+    data = note_response.json()
+
+    assert data["message"] == "Notatka została dodana"
+    assert data["note"]["lead_id"] == lead_id
+    assert data["note"]["content"] == (
+        "Klient zainteresowany. Oddzwonić jutro."
+    )
+    
+    
+def test_user_cannot_create_lead_note(client):
+    token = create_access_token({
+        "sub": "ewelina",
+        "role": "user"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = client.post(
+        "/leads/1/notes",
+        json={
+            "content": "Próba dodania notatki"
+        },
+        headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Brak uprawnień"
+    
+    
+def test_admin_can_create_lead_note(client, auth_headers):
+    create_response = client.post(
+        "/leads",
+        json={
+            "name": "Piotr",
+            "email": "piotr@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        },
+        headers=auth_headers
+    )
+
+    assert create_response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+
+    lead_id = leads[0]["id"]
+
+    note_response = client.post(
+        f"/leads/{lead_id}/notes",
+        json={
+            "content": "Admin dodał notatkę do leada."
+        },
+        headers=auth_headers
+    )
+
+    assert note_response.status_code == 200
+
+    data = note_response.json()
+
+    assert data["message"] == "Notatka została dodana"
+    assert data["note"]["lead_id"] == lead_id
+    assert data["note"]["content"] == (
+        "Admin dodał notatkę do leada."
+    )
+    
+    
+def test_empty_lead_note_is_rejected(client, auth_headers):
+    response = client.post(
+        "/leads/1/notes",
+        json={
+            "content": ""
+        },
+        headers=auth_headers
+    )
+
+    assert response.status_code == 422
+    
+    
+def test_create_note_for_nonexistent_lead(client, auth_headers):
+    response = client.post(
+        "/leads/999999/notes",
+        json={
+            "content": "Notatka do nieistniejącego leada"
+        },
+        headers=auth_headers
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Lead nie został znaleziony"

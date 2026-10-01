@@ -13,7 +13,8 @@ from app.models import (
     LeadStats,
     LeadStatusUpdate,
     UserCreate,
-    UserLogin
+    UserLogin,
+    LeadNoteCreate
 )
 from app.services import analyze_lead, prepare_lead_update
 from app.security import hash_password, verify_password
@@ -21,7 +22,7 @@ from app.database import Base, engine, get_db
 from app import db_models
 from app import user_models
 from app.user_models import UserDB
-from app.db_models import LeadDB
+from app.db_models import LeadDB, LeadNoteDB
 from app.jwt import create_access_token, get_current_user
 
 
@@ -268,6 +269,41 @@ def get_lead(
         )
 
     return lead
+
+
+@app.post("/leads/{lead_id}/notes")
+def create_lead_note(
+    lead_id: int,
+    note: LeadNoteCreate,
+    current_user: dict = Depends(require_role("sales", "admin")),
+    db: Session = Depends(get_db)
+):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    new_note = LeadNoteDB(
+        lead_id=lead_id,
+        content=note.content
+    )
+
+    db.add(new_note)
+    db.commit()
+    db.refresh(new_note)
+
+    return {
+        "message": "Notatka została dodana",
+        "note": {
+            "id": new_note.id,
+            "lead_id": new_note.lead_id,
+            "content": new_note.content,
+            "created_at": new_note.created_at
+        }
+    }
 
 
 @app.delete("/leads/{lead_id}")
