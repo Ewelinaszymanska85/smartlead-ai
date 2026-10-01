@@ -35,3 +35,17 @@ class LeadNoteDB(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
+    
+    
+class LeadHistoryDB(Base):
+    __tablename__ = "lead_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, nullable=False)
+    action = Column(String(100), nullable=False)
+    details = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )

@@ -1444,3 +1444,80 @@ def test_admin_can_get_lead_notes(client, auth_headers):
     assert len(data["notes"]) == 2
     assert data["notes"][0]["content"] == "Pierwsza notatka."
     assert data["notes"][1]["content"] == "Druga notatka."
+    
+    
+def test_create_lead_creates_history(client, auth_headers):
+    response = client.post(
+        "/leads",
+        json={
+            "name": "Historia",
+            "email": "historia@example.com",
+            "message": "Potrzebuję strony internetowej"
+        },
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+
+    lead_id = response.json()["lead"]["id"]
+
+    from app.database import SessionLocal
+    from app.db_models import LeadHistoryDB
+
+    db = SessionLocal()
+
+    history = (
+        db.query(LeadHistoryDB)
+        .filter(LeadHistoryDB.lead_id == lead_id)
+        .first()
+    )
+
+    db.close()
+
+    assert history is not None
+    assert history.action == "created"
+    assert history.details == "Lead został utworzony"
+    
+    
+def test_create_lead_creates_history(client, auth_headers):
+    response = client.post(
+        "/leads",
+        json={
+            "name": "Historia",
+            "email": "historia@example.com",
+            "message": "Potrzebuję strony internetowej"
+        },
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+
+    lead = next(
+        lead for lead in leads
+        if lead["email"] == "historia@example.com"
+    )
+
+    lead_id = lead["id"]
+
+    history_response = client.get(
+        f"/leads/{lead_id}/history",
+        headers=auth_headers
+    )
+
+    assert history_response.status_code == 200
+
+    data = history_response.json()
+
+    assert data["lead_id"] == lead_id
+    assert len(data["history"]) >= 1
+    assert data["history"][0]["action"] == "created"
+    assert data["history"][0]["details"] == "Lead został utworzony"

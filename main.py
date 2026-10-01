@@ -22,7 +22,7 @@ from app.database import Base, engine, get_db
 from app import db_models
 from app import user_models
 from app.user_models import UserDB
-from app.db_models import LeadDB, LeadNoteDB
+from app.db_models import LeadDB, LeadNoteDB, LeadHistoryDB
 from app.jwt import create_access_token, get_current_user
 
 
@@ -152,6 +152,15 @@ def create_lead(
     db.add(lead_db)
     db.commit()
     db.refresh(lead_db)
+    
+    history = LeadHistoryDB(
+        lead_id=lead_db.id,
+        action="created",
+        details="Lead został utworzony"
+    )
+
+    db.add(history)
+    db.commit()
 
     return {
         "message": "Dane klienta zostały odebrane.",
@@ -251,6 +260,41 @@ def get_stats(
         "high_priority": high_priority,
         "normal_priority": normal_priority,
         "categories": categories
+    }
+    
+    
+@app.get("/leads/{lead_id}/history")
+def get_lead_history(
+    lead_id: int,
+    current_user: dict = Depends(require_role("sales", "admin")),
+    db: Session = Depends(get_db)
+):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    history = (
+        db.query(LeadHistoryDB)
+        .filter(LeadHistoryDB.lead_id == lead_id)
+        .order_by(LeadHistoryDB.created_at.asc())
+        .all()
+    )
+
+    return {
+        "lead_id": lead_id,
+        "history": [
+            {
+                "id": item.id,
+                "action": item.action,
+                "details": item.details,
+                "created_at": item.created_at
+            }
+            for item in history
+        ]
     }
 
 
