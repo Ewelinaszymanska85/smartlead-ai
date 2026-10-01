@@ -271,6 +271,40 @@ def get_lead(
     return lead
 
 
+@app.get("/leads/{lead_id}/notes")
+def get_lead_notes(
+    lead_id: int,
+    current_user: dict = Depends(require_role("sales", "admin")),
+    db: Session = Depends(get_db)
+):
+    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    notes = (
+        db.query(LeadNoteDB)
+        .filter(LeadNoteDB.lead_id == lead_id)
+        .order_by(LeadNoteDB.created_at.asc())
+        .all()
+    )
+
+    return {
+        "lead_id": lead_id,
+        "notes": [
+            {
+                "id": note.id,
+                "content": note.content,
+                "created_at": note.created_at
+            }
+            for note in notes
+        ]
+    }
+
+
 @app.post("/leads/{lead_id}/notes")
 def create_lead_note(
     lead_id: int,

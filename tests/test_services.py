@@ -1311,3 +1311,136 @@ def test_create_note_for_nonexistent_lead(client, auth_headers):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Lead nie został znaleziony"
+    
+    
+def test_sales_can_get_lead_notes(client):
+    token = create_access_token({
+        "sub": "sales",
+        "role": "sales"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    create_response = client.post(
+        "/leads",
+        json={
+            "name": "Kasia",
+            "email": "kasia@example.com",
+            "message": "Potrzebuję strony internetowej"
+        },
+        headers=headers
+    )
+
+    assert create_response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+    lead_id = leads[0]["id"]
+
+    note_response = client.post(
+        f"/leads/{lead_id}/notes",
+        json={
+            "content": "Pierwsza notatka do klienta."
+        },
+        headers=headers
+    )
+
+    assert note_response.status_code == 200
+
+    response = client.get(
+        f"/leads/{lead_id}/notes",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["lead_id"] == lead_id
+    assert len(data["notes"]) == 1
+    assert data["notes"][0]["content"] == (
+        "Pierwsza notatka do klienta."
+    )
+    
+    
+def test_user_cannot_get_lead_notes(client):
+    token = create_access_token({
+        "sub": "ewelina",
+        "role": "user"
+    })
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = client.get(
+        "/leads/1/notes",
+        headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Brak uprawnień"
+    
+    
+def test_admin_can_get_lead_notes(client, auth_headers):
+    create_response = client.post(
+        "/leads",
+        json={
+            "name": "Marek",
+            "email": "marek@example.com",
+            "message": "Potrzebuję sklepu internetowego"
+        },
+        headers=auth_headers
+    )
+
+    assert create_response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
+
+    assert leads_response.status_code == 200
+
+    lead_id = leads_response.json()[0]["id"]
+
+    first_note = client.post(
+        f"/leads/{lead_id}/notes",
+        json={
+            "content": "Pierwsza notatka."
+        },
+        headers=auth_headers
+    )
+
+    second_note = client.post(
+        f"/leads/{lead_id}/notes",
+        json={
+            "content": "Druga notatka."
+        },
+        headers=auth_headers
+    )
+
+    assert first_note.status_code == 200
+    assert second_note.status_code == 200
+
+    response = client.get(
+        f"/leads/{lead_id}/notes",
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["lead_id"] == lead_id
+    assert len(data["notes"]) == 2
+    assert data["notes"][0]["content"] == "Pierwsza notatka."
+    assert data["notes"][1]["content"] == "Druga notatka."
