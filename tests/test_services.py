@@ -406,7 +406,59 @@ def test_get_stats_rejects_user_role(client):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "Brak uprawnień"
+    
+    
+def test_delete_lead_rejects_user_role(client):
+    token = create_access_token({
+        "sub": "ewelina",
+        "role": "user"
+    })
 
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = client.delete(
+        "/leads/1",
+        headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Brak uprawnień"
+    
+    
+def test_delete_lead_allows_admin(client, auth_headers):
+    create_response = client.post(
+        "/leads",
+        json={
+            "name": "Lead Do Usunięcia",
+            "email": "delete@example.com",
+            "message": "Potrzebuję strony internetowej"
+        },
+        headers=auth_headers
+    )
+
+    assert create_response.status_code == 200
+
+    leads_response = client.get(
+        "/leads",
+        headers=auth_headers
+    )
+
+    assert leads_response.status_code == 200
+
+    leads = leads_response.json()
+
+    lead_id = leads[0]["id"]
+
+    response = client.delete(
+        f"/leads/{lead_id}",
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Lead został usunięty"
+    
 
 def test_filter_leads_by_search(client, auth_headers):
     client.post(

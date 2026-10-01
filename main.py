@@ -273,7 +273,7 @@ def get_lead(
 @app.delete("/leads/{lead_id}")
 def delete_lead(
     lead_id: int,
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(require_role("admin")),
     db: Session = Depends(get_db)
 ):
     lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
