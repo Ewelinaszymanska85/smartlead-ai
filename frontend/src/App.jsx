@@ -1,8 +1,17 @@
+import { Routes, Route } from 'react-router-dom'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 import './App.css'
 
 function App() {
   return (
-    <div className="app">
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/"
+        element={
+          <div className="app">
       <header className="navbar">
         <a href="#home" className="brand">
           <span className="brand-icon">S</span>
@@ -291,8 +300,11 @@ function App() {
 
         <p>Inteligentniejsze zarządzanie relacjami z klientami.</p>
         <span className="footer-copy">© 2026 SmartLead AI</span>
-      </footer>
-    </div>
+            </footer>
+          </div>
+        }
+      />
+    </Routes>
   )
 }
 
