@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const STATUS_OPTIONS = [
+  { value: 'new', label: 'Nowy' },
+  { value: 'contacted', label: 'Skontaktowano się' },
+  { value: 'in_progress', label: 'W trakcie realizacji' },
+  { value: 'closed', label: 'Zamknięty' },
+]
+
+function getStatusLabel(status) {
+  return STATUS_OPTIONS.find((option) => option.value === status)?.label || status || '—'
+}
+
 function Dashboard() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
@@ -8,6 +19,7 @@ function Dashboard() {
   const [leads, setLeads] = useState([])
   const [message, setMessage] = useState('Ładowanie danych...')
   const [error, setError] = useState('')
+  const [updatingLeadId, setUpdatingLeadId] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -56,6 +68,56 @@ function Dashboard() {
 
     loadDashboard()
   }, [navigate])
+
+  async function handleStatusChange(leadId, newStatus) {
+    const token = localStorage.getItem('access_token')
+    const previousLead = leads.find((lead) => lead.id === leadId)
+
+    if (!token || !previousLead) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    setError('')
+    setUpdatingLeadId(leadId)
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/leads/${leadId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      )
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('username')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Nie udało się zapisać nowego statusu.')
+      }
+
+      const updatedLead = await response.json()
+
+      setLeads((currentLeads) =>
+        currentLeads.map((lead) =>
+          lead.id === leadId ? updatedLead : lead,
+        ),
+      )
+    } catch (err) {
+      setError(err.message || 'Wystąpił błąd podczas zmiany statusu.')
+    } finally {
+      setUpdatingLeadId(null)
+    }
+  }
 
   function handleLogout() {
     localStorage.removeItem('access_token')
@@ -129,6 +191,7 @@ function Dashboard() {
                     <th>E-mail</th>
                     <th>Kategoria</th>
                     <th>Priorytet</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
 
@@ -139,6 +202,28 @@ function Dashboard() {
                       <td>{lead.email || '—'}</td>
                       <td>{lead.category || '—'}</td>
                       <td>{lead.priority || '—'}</td>
+                      <td>
+                        <select
+                          aria-label={`Status leada: ${lead.name}`}
+                          value={lead.status || 'new'}
+                          disabled={updatingLeadId === lead.id}
+                          onChange={(event) =>
+                            handleStatusChange(lead.id, event.target.value)
+                          }
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="sr-only">
+                          Aktualny status: {getStatusLabel(lead.status)}
+                        </span>
+                        {updatingLeadId === lead.id && (
+                          <span role="status"> Zapisywanie...</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
