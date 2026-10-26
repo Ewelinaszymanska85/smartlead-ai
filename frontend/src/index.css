@@ -109,3 +109,59 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Sekcja notatek klienta */
+.dashboard-leads textarea {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  min-height: 100px;
+  margin: 10px 0 14px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Przycisk zapisywania notatek */
+.dashboard-leads button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+/* Treść zapisanej notatki */
+.dashboard-leads article {
+  margin: 12px 0;
+  padding: 14px;
+  text-align: left;
+  background: var(--social-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-leads article p {
+  margin-bottom: 8px;
+}
+
+.dashboard-leads article small {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* Układ formularza notatki */
+.dashboard-leads textarea,
+.dashboard-leads label {
+  text-align: left;
+}
+
+.dashboard-leads label {
+  display: block;
+  font-weight: 600;
+  margin-top: 16px;
+}

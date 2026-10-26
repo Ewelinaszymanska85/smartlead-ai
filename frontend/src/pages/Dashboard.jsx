@@ -21,6 +21,12 @@ function Dashboard() {
   const [error, setError] = useState('')
   const [updatingLeadId, setUpdatingLeadId] = useState(null)
 
+  const [expandedLeadId, setExpandedLeadId] = useState(null)
+  const [notes, setNotes] = useState({})
+  const [notesLoadingLeadId, setNotesLoadingLeadId] = useState(null)
+  const [noteDrafts, setNoteDrafts] = useState({})
+  const [savingNoteLeadId, setSavingNoteLeadId] = useState(null)
+
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     const savedUsername = localStorage.getItem('username')
@@ -119,6 +125,121 @@ function Dashboard() {
     }
   }
 
+  async function handleToggleNotes(leadId) {
+    if (expandedLeadId === leadId) {
+      setExpandedLeadId(null)
+      return
+    }
+
+    setExpandedLeadId(leadId)
+
+    if (notes[leadId] !== undefined) {
+      return
+    }
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    setError('')
+    setNotesLoadingLeadId(leadId)
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/leads/${leadId}/notes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('username')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Nie udało się pobrać notatek klienta.')
+      }
+
+      const data = await response.json()
+      setNotes((currentNotes) => ({
+        ...currentNotes,
+        [leadId]: data.notes || [],
+      }))
+    } catch (err) {
+      setError(err.message || 'Wystąpił błąd podczas pobierania notatek.')
+    } finally {
+      setNotesLoadingLeadId(null)
+    }
+  }
+
+  async function handleAddNote(leadId) {
+    const content = (noteDrafts[leadId] || '').trim()
+
+    if (!content) {
+      setError('Wpisz treść notatki przed zapisaniem.')
+      return
+    }
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    setError('')
+    setSavingNoteLeadId(leadId)
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/leads/${leadId}/notes`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content }),
+        },
+      )
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('username')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Nie udało się zapisać notatki.')
+      }
+
+      const data = await response.json()
+
+      setNotes((currentNotes) => ({
+        ...currentNotes,
+        [leadId]: [...(currentNotes[leadId] || []), data.note],
+      }))
+
+      setNoteDrafts((currentDrafts) => ({
+        ...currentDrafts,
+        [leadId]: '',
+      }))
+    } catch (err) {
+      setError(err.message || 'Wystąpił błąd podczas zapisywania notatki.')
+    } finally {
+      setSavingNoteLeadId(null)
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem('access_token')
     localStorage.removeItem('username')
@@ -192,39 +313,109 @@ function Dashboard() {
                     <th>Kategoria</th>
                     <th>Priorytet</th>
                     <th>Status</th>
+                    <th>Notatki</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {leads.map((lead) => (
-                    <tr key={lead.id}>
-                      <td>{lead.name || '—'}</td>
-                      <td>{lead.email || '—'}</td>
-                      <td>{lead.category || '—'}</td>
-                      <td>{lead.priority || '—'}</td>
-                      <td>
-                        <select
-                          aria-label={`Status leada: ${lead.name}`}
-                          value={lead.status || 'new'}
-                          disabled={updatingLeadId === lead.id}
-                          onChange={(event) =>
-                            handleStatusChange(lead.id, event.target.value)
-                          }
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="sr-only">
-                          Aktualny status: {getStatusLabel(lead.status)}
-                        </span>
-                        {updatingLeadId === lead.id && (
-                          <span role="status"> Zapisywanie...</span>
-                        )}
-                      </td>
-                    </tr>
+                    <>
+                      <tr key={lead.id}>
+                        <td>{lead.name || '—'}</td>
+                        <td>{lead.email || '—'}</td>
+                        <td>{lead.category || '—'}</td>
+                        <td>{lead.priority || '—'}</td>
+                        <td>
+                          <select
+                            aria-label={`Status leada: ${lead.name}`}
+                            value={lead.status || 'new'}
+                            disabled={updatingLeadId === lead.id}
+                            onChange={(event) =>
+                              handleStatusChange(lead.id, event.target.value)
+                            }
+                          >
+                            {STATUS_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="sr-only">
+                            Aktualny status: {getStatusLabel(lead.status)}
+                          </span>
+                          {updatingLeadId === lead.id && (
+                            <span role="status"> Zapisywanie...</span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className="button button-login"
+                            type="button"
+                            onClick={() => handleToggleNotes(lead.id)}
+                          >
+                            {expandedLeadId === lead.id
+                              ? 'Ukryj notatki'
+                              : 'Pokaż notatki'}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {expandedLeadId === lead.id && (
+                        <tr key={`notes-${lead.id}`}>
+                          <td colSpan="6">
+                            <section aria-label={`Notatki klienta ${lead.name}`}>
+                              <h3>Notatki: {lead.name}</h3>
+
+                              {notesLoadingLeadId === lead.id && (
+                                <p role="status">Ładowanie notatek...</p>
+                              )}
+
+                              {notes[lead.id] && notes[lead.id].length === 0 && (
+                                <p>Ten klient nie ma jeszcze notatek.</p>
+                              )}
+
+                              {notes[lead.id]?.map((note) => (
+                                <article key={note.id}>
+                                  <p>{note.content}</p>
+                                  <small>
+                                    {note.created_at
+                                      ? new Date(note.created_at).toLocaleString('pl-PL')
+                                      : ''}
+                                  </small>
+                                </article>
+                              ))}
+
+                              <label htmlFor={`note-${lead.id}`}>
+                                Dodaj notatkę
+                              </label>
+                              <textarea
+                                id={`note-${lead.id}`}
+                                rows="3"
+                                value={noteDrafts[lead.id] || ''}
+                                onChange={(event) =>
+                                  setNoteDrafts((currentDrafts) => ({
+                                    ...currentDrafts,
+                                    [lead.id]: event.target.value,
+                                  }))
+                                }
+                                placeholder="Wpisz treść notatki..."
+                              />
+
+                              <button
+                                className="button button-login"
+                                type="button"
+                                disabled={savingNoteLeadId === lead.id}
+                                onClick={() => handleAddNote(lead.id)}
+                              >
+                                {savingNoteLeadId === lead.id
+                                  ? 'Zapisywanie...'
+                                  : 'Zapisz notatkę'}
+                              </button>
+                            </section>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>
