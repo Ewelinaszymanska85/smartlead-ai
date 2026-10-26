@@ -1,6 +1,51 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function Register() {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleRegister(event) {
+    event.preventDefault()
+    setMessage('')
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Nie udało się utworzyć konta.'
+        )
+      }
+
+      setMessage('Konto zostało utworzone. Możesz się zalogować.')
+      setUsername('')
+      setPassword('')
+    } catch (error) {
+      setMessage(
+        error.message || 'Nie udało się połączyć z serwerem.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <main className="auth-page">
       <section className="auth-card">
@@ -12,31 +57,22 @@ function Register() {
         </Link>
 
         <h1>Utwórz konto</h1>
+
         <p className="auth-description">
           Załóż konto i zacznij zarządzać potencjalnymi klientami.
         </p>
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleRegister}>
           <div className="form-field">
-            <label htmlFor="name">Imię</label>
+            <label htmlFor="username">Nazwa użytkownika</label>
             <input
-              id="name"
-              name="name"
+              id="username"
+              name="username"
               type="text"
-              autoComplete="given-name"
-              placeholder="Twoje imię"
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="email">Adres e-mail</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="twoj@email.pl"
+              autoComplete="username"
+              placeholder="Wpisz nazwę użytkownika"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               required
             />
           </div>
@@ -48,16 +84,27 @@ function Register() {
               name="password"
               type="password"
               autoComplete="new-password"
-              minLength={8}
-              placeholder="Minimum 8 znaków"
+              placeholder="Wpisz hasło"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               required
             />
           </div>
 
-          <button className="button button-primary auth-submit" type="submit">
-            Utwórz konto
+          <button
+            className="button button-primary auth-submit"
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Tworzenie konta...' : 'Utwórz konto'}
           </button>
         </form>
+
+        {message && (
+          <p role="status" aria-live="polite">
+            {message}
+          </p>
+        )}
 
         <p className="auth-switch">
           Masz już konto? <Link to="/login">Zaloguj się</Link>

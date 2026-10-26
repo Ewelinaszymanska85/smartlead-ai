@@ -4,3 +4,5 @@ __pycache__/
 .env
 smartlead.db
 test_smartlead.db
+.env.*
+!.env.example
