@@ -24,16 +24,27 @@ function App() {
           <a href="#about">O projekcie</a>
         </nav>
 
-        <div className="nav-actions">
-          <button className="button button-login" type="button">
-            Zaloguj się
-          </button>
-          <button className="button button-primary" type="button">
-            Rozpocznij
-            <span aria-hidden="true"> →</span>
-          </button>
-        </div>
-      </header>
+
+<div className="nav-actions">
+  <button
+    className="button button-login"
+    type="button"
+    onClick={() => (window.location.href = '/login')}
+  >
+    Zaloguj się
+  </button>
+
+  <button
+    className="button button-primary"
+    type="button"
+    onClick={() => (window.location.href = '/register')}
+  >
+    Rozpocznij
+    <span aria-hidden="true"> →</span>
+  </button>
+</div>
+  </header>
+
 
       <main>
         <section className="hero-section" id="home">
