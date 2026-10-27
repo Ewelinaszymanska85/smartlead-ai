@@ -17,6 +17,8 @@ function Dashboard() {
   const [username, setUsername] = useState('')
   const [stats, setStats] = useState(null)
   const [leads, setLeads] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [message, setMessage] = useState('Ładowanie danych...')
   const [error, setError] = useState('')
   const [updatingLeadId, setUpdatingLeadId] = useState(null)
@@ -26,6 +28,20 @@ function Dashboard() {
   const [notesLoadingLeadId, setNotesLoadingLeadId] = useState(null)
   const [noteDrafts, setNoteDrafts] = useState({})
   const [savingNoteLeadId, setSavingNoteLeadId] = useState(null)
+
+  const filteredLeads = leads.filter((lead) => {
+  const query = searchTerm.trim().toLowerCase()
+
+  const matchesSearch =
+    (lead.name || '').toLowerCase().includes(query) ||
+    (lead.email || '').toLowerCase().includes(query) ||
+    (lead.category || '').toLowerCase().includes(query)
+
+  const matchesStatus =
+    statusFilter === 'all' || (lead.status || 'new') === statusFilter
+
+  return matchesSearch && matchesStatus
+})
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -299,6 +315,35 @@ function Dashboard() {
         <section className="dashboard-leads">
           <h2>Lista leadów</h2>
 
+            <div className="leads-filters">
+  <label htmlFor="lead-search">Szukaj klienta</label>
+  <input
+    id="lead-search"
+    type="text"
+    value={searchTerm}
+    onChange={(event) => setSearchTerm(event.target.value)}
+    placeholder="Imię, e-mail lub kategoria..."
+  />
+
+  <label htmlFor="lead-status-filter">Filtruj według statusu</label>
+  <select
+    id="lead-status-filter"
+    value={statusFilter}
+    onChange={(event) => setStatusFilter(event.target.value)}
+  >
+    <option value="all">Wszystkie statusy</option>
+    {STATUS_OPTIONS.map((option) => (
+      <option key={option.value} value={option.value}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+</div>
+
+<p>
+  Liczba znalezionych leadów: {filteredLeads.length}
+</p>
+
           {leads.length === 0 && !message && !error && (
             <p>Nie ma jeszcze żadnych leadów.</p>
           )}
@@ -318,7 +363,7 @@ function Dashboard() {
                 </thead>
 
                 <tbody>
-                  {leads.map((lead) => (
+                  {filteredLeads.map((lead) => (
                     <>
                       <tr key={lead.id}>
                         <td>{lead.name || '—'}</td>
