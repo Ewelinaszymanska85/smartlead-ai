@@ -295,22 +295,43 @@ function Dashboard() {
         {error && <p role="alert">{error}</p>}
 
         {stats && (
-          <div className="dashboard-stats">
-            <article className="dashboard-stat-card">
-              <span>Wszyscy klienci</span>
-              <strong>
-                {stats.total_leads ?? stats.total ?? stats.count ?? '—'}
-              </strong>
-            </article>
+  <div className="dashboard-stats">
+    <article className="dashboard-stat-card">
+      <span>Wszyscy klienci</span>
+      <strong>{stats.total ?? '—'}</strong>
+    </article>
 
-            <article className="dashboard-stat-card">
-              <span>Wysoki priorytet</span>
-              <strong>
-                {stats.high_priority ?? stats.high_priority_leads ?? '—'}
-              </strong>
-            </article>
-          </div>
-        )}
+    <article className="dashboard-stat-card">
+      <span>Wysoki priorytet</span>
+      <strong>{stats.high_priority ?? '—'}</strong>
+    </article>
+
+    <article className="dashboard-stat-card">
+      <span>Normalny priorytet</span>
+      <strong>{stats.normal_priority ?? '—'}</strong>
+    </article>
+
+    <article className="dashboard-stat-card">
+      <span>Nowe</span>
+      <strong>{stats.statuses?.new ?? '—'}</strong>
+    </article>
+
+    <article className="dashboard-stat-card">
+      <span>Skontaktowano się</span>
+      <strong>{stats.statuses?.contacted ?? '—'}</strong>
+    </article>
+
+    <article className="dashboard-stat-card">
+      <span>W trakcie realizacji</span>
+      <strong>{stats.statuses?.in_progress ?? '—'}</strong>
+    </article>
+
+    <article className="dashboard-stat-card">
+      <span>Zamknięte</span>
+      <strong>{stats.statuses?.closed ?? '—'}</strong>
+    </article>
+  </div>
+)}
 
         <section className="dashboard-leads">
           <h2>Lista leadów</h2>

@@ -238,13 +238,15 @@ def get_leads(
     return query.all()
 
 
-@app.get("/stats", response_model=LeadStats)
+@app.get("/stats")
 def get_stats(
     current_user: dict = Depends(require_role("admin", "sales")),
     db: Session = Depends(get_db)
 ):
+    # Łączna liczba leadów
     total = db.query(LeadDB).count()
 
+    # Liczba leadów według priorytetu
     high_priority = (
         db.query(LeadDB)
         .filter(LeadDB.priority == "high")
@@ -257,6 +259,17 @@ def get_stats(
         .count()
     )
 
+    # Liczba leadów według statusu
+    statuses = {}
+
+    for status in ["new", "contacted", "in_progress", "closed"]:
+        statuses[status] = (
+            db.query(LeadDB)
+            .filter(LeadDB.status == status)
+            .count()
+        )
+
+    # Liczba leadów według kategorii
     categories = {}
 
     for category in db.query(LeadDB.category).distinct():
@@ -272,6 +285,7 @@ def get_stats(
         "total": total,
         "high_priority": high_priority,
         "normal_priority": normal_priority,
+        "statuses": statuses,
         "categories": categories
     }
     
