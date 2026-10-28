@@ -29,6 +29,12 @@ function Dashboard() {
   { name: 'Wysoki priorytet', value: stats?.high_priority ?? 0 },
   { name: 'Normalny priorytet', value: stats?.normal_priority ?? 0 },
 ]
+  const categoryChartData = Object.entries(stats?.categories ?? {}).map(
+  ([name, value]) => ({
+    name,
+    value,
+  }),
+)
   const [leads, setLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -364,6 +370,35 @@ function Dashboard() {
           <Cell
             key={`priority-${index}`}
             fill={index === 0 ? '#ef4444' : '#3b82f6'}
+          />
+        ))}
+      </Pie>
+
+      <Tooltip />
+      <Legend />
+    </PieChart>
+  </ResponsiveContainer>
+</div>
+
+
+{/* Wykres przedstawiający kategorie leadów */}
+<div className="dashboard-chart-card">
+  <h2>Kategorie leadów</h2>
+
+  <ResponsiveContainer width="100%" height={300}>
+    <PieChart>
+      <Pie
+        data={categoryChartData}
+        dataKey="value"
+        nameKey="name"
+        cx="50%"
+        cy="50%"
+        outerRadius={100}
+      >
+        {categoryChartData.map((entry, index) => (
+          <Cell
+            key={`category-${entry.name}`}
+            fill={['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981'][index % 4]}
           />
         ))}
       </Pie>
