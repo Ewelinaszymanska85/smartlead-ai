@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
+
 const STATUS_OPTIONS = [
   { value: 'new', label: 'Nowy' },
   { value: 'contacted', label: 'Skontaktowano się' },
@@ -16,6 +25,10 @@ function Dashboard() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [stats, setStats] = useState(null)
+  const priorityChartData = [
+  { name: 'Wysoki priorytet', value: stats?.high_priority ?? 0 },
+  { name: 'Normalny priorytet', value: stats?.normal_priority ?? 0 },
+]
   const [leads, setLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -332,6 +345,35 @@ function Dashboard() {
     </article>
   </div>
 )}
+
+  {/* Wykres przedstawiający priorytety leadów */}
+<div className="dashboard-chart-card">
+  <h2>Priorytety leadów</h2>
+
+  <ResponsiveContainer width="100%" height={300}>
+    <PieChart>
+      <Pie
+        data={priorityChartData}
+        dataKey="value"
+        nameKey="name"
+        cx="50%"
+        cy="50%"
+        outerRadius={100}
+      >
+        {priorityChartData.map((entry, index) => (
+          <Cell
+            key={`priority-${index}`}
+            fill={index === 0 ? '#ef4444' : '#3b82f6'}
+          />
+        ))}
+      </Pie>
+
+      <Tooltip />
+      <Legend />
+    </PieChart>
+  </ResponsiveContainer>
+</div>
+
 
         <section className="dashboard-leads">
           <h2>Lista leadów</h2>
