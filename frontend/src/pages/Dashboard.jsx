@@ -36,10 +36,10 @@ function Dashboard() {
   }),
 )
 const statusChartData = Object.entries(stats?.statuses ?? {}).map(
-  ([name, value]) => ({
-    name,
-    value,
-  }),
+([name, value]) => ({
+name: getStatusLabel(name),
+value,
+}),
 )
 
   const [leads, setLeads] = useState([])
@@ -524,7 +524,6 @@ const filteredLeads = leads.filter((lead) => {
 >
   Wyczyść filtry
 </button>
-
 </div>
 
 <p>

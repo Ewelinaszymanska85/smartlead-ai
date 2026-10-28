@@ -165,3 +165,64 @@ code {
   font-weight: 600;
   margin-top: 16px;
 }
+
+/* Układ filtrów na liście leadów */
+.leads-filters {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 10px 16px;
+align-items: center;
+margin: 20px 0;
+padding: 20px;
+background: var(--social-bg);
+border: 1px solid var(--border);
+border-radius: 12px;
+text-align: left;
+}
+
+/* Czytelne etykiety filtrów */
+.leads-filters label {
+display: block;
+margin: 0;
+font-size: 14px;
+font-weight: 600;
+color: var(--text-h);
+}
+
+/* Pola wyszukiwania i listy wyboru */
+.leads-filters input,
+.leads-filters select {
+width: 100%;
+min-width: 0;
+box-sizing: border-box;
+padding: 11px 12px;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: var(--bg);
+color: var(--text-h);
+font: inherit;
+font-size: 14px;
+}
+
+/* Przycisk czyszczenia filtrów */
+.leads-filters button {
+justify-self: start;
+align-self: center;
+min-height: 40px;
+padding: 10px 16px;
+border: 0;
+border-radius: 8px;
+cursor: pointer;
+}
+
+/* Wygodny układ na telefonach */
+@media (max-width: 640px) {
+.leads-filters {
+grid-template-columns: minmax(0, 1fr);
+padding: 14px;
+}
+
+.leads-filters button {
+width: 100%;
+}
+}
