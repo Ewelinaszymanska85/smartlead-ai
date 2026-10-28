@@ -45,6 +45,8 @@ const statusChartData = Object.entries(stats?.statuses ?? {}).map(
   const [leads, setLeads] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [message, setMessage] = useState('Ładowanie danych...')
   const [error, setError] = useState('')
   const [updatingLeadId, setUpdatingLeadId] = useState(null)
@@ -55,7 +57,15 @@ const statusChartData = Object.entries(stats?.statuses ?? {}).map(
   const [noteDrafts, setNoteDrafts] = useState({})
   const [savingNoteLeadId, setSavingNoteLeadId] = useState(null)
 
-  const filteredLeads = leads.filter((lead) => {
+function clearFilters() {
+  setSearchTerm('')
+  setStatusFilter('all')
+  setPriorityFilter('all')
+  setCategoryFilter('all')
+}
+
+
+const filteredLeads = leads.filter((lead) => {
   const query = searchTerm.trim().toLowerCase()
 
   const matchesSearch =
@@ -66,8 +76,15 @@ const statusChartData = Object.entries(stats?.statuses ?? {}).map(
   const matchesStatus =
     statusFilter === 'all' || (lead.status || 'new') === statusFilter
 
-  return matchesSearch && matchesStatus
+  const matchesPriority =
+    priorityFilter === 'all' || (lead.priority || '').toLowerCase() === priorityFilter
+
+  const matchesCategory =
+    categoryFilter === 'all' || lead.category === categoryFilter
+
+  return matchesSearch && matchesStatus && matchesPriority && matchesCategory
 })
+
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -472,6 +489,42 @@ const statusChartData = Object.entries(stats?.statuses ?? {}).map(
       </option>
     ))}
   </select>
+
+<label htmlFor="lead-priority-filter">Filtruj według priorytetu</label>
+<select
+  id="lead-priority-filter"
+  value={priorityFilter}
+  onChange={(event) => setPriorityFilter(event.target.value)}
+>
+  <option value="all">Wszystkie priorytety</option>
+  <option value="high">Wysoki</option>
+  <option value="normal">Normalny</option>
+</select>
+
+<label htmlFor="lead-category-filter">Filtruj według kategorii</label>
+<select
+  id="lead-category-filter"
+  value={categoryFilter}
+  onChange={(event) => setCategoryFilter(event.target.value)}
+>
+  <option value="all">Wszystkie kategorie</option>
+  {[...new Set(leads.map((lead) => lead.category).filter(Boolean))]
+    .sort()
+    .map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+</select>
+
+<button
+  className="button button-login"
+  type="button"
+  onClick={clearFilters}
+>
+  Wyczyść filtry
+</button>
+
 </div>
 
 <p>
