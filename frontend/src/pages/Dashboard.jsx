@@ -85,6 +85,55 @@ const filteredLeads = leads.filter((lead) => {
   return matchesSearch && matchesStatus && matchesPriority && matchesCategory
 })
 
+const exportToCSV = () => {
+  const headers = [
+    "ID",
+    "Imię i nazwisko",
+    "E-mail",
+    "Wiadomość",
+    "Kategoria",
+    "Priorytet",
+    "Status",
+    "Data utworzenia",
+  ];
+
+  const rows = filteredLeads.map((lead) => [
+    lead.id ?? "",
+    lead.name ?? "",
+    lead.email ?? "",
+    lead.message ?? "",
+    lead.category ?? "",
+    lead.priority ?? "",
+    STATUS_OPTIONS.find((option) => option.value === lead.status)?.label ??
+      lead.status ??
+      "",
+    lead.created_at ?? "",
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) =>
+      row
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(";")
+    )
+    .join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "smartlead-leady.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+};
+
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -523,6 +572,15 @@ const filteredLeads = leads.filter((lead) => {
   onClick={clearFilters}
 >
   Wyczyść filtry
+</button>
+
+<button
+  className="button button-login"
+  type="button"
+  onClick={exportToCSV}
+  disabled={filteredLeads.length === 0}
+>
+  Eksportuj do CSV
 </button>
 </div>
 
