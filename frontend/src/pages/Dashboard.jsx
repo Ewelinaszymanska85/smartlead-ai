@@ -152,9 +152,9 @@ const exportToCSV = () => {
           Authorization: `Bearer ${token}`,
         }
 
-        const [statsResponse, leadsResponse] = await Promise.all([
+    const [statsResponse, leadsResponse] = await Promise.all([
           fetch('http://127.0.0.1:8000/stats', { headers }),
-          fetch('http://127.0.0.1:8000/leads', { headers }),
+          fetch('http://127.0.0.1:8000/leads?limit=100&sort=newest', { headers }),
         ])
 
         if (statsResponse.status === 401 || leadsResponse.status === 401) {
