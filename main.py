@@ -429,6 +429,8 @@ def delete_lead(
             detail="Lead nie został znaleziony"
         )
 
+    db.query(LeadNoteDB).filter(LeadNoteDB.lead_id == lead_id).delete()
+    db.query(LeadHistoryDB).filter(LeadHistoryDB.lead_id == lead_id).delete()
     db.delete(lead)
     db.commit()
 
