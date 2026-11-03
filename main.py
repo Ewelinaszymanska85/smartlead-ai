@@ -87,6 +87,16 @@ def home():
     return {"message": "SmartLead AI działa!"}
 
 
+def add_history(db: Session, lead_id: int, action: str, details: str):
+    db.add(
+        LeadHistoryDB(
+            lead_id=lead_id,
+            action=action,
+            details=details
+        )
+    )
+    
+
 @app.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(UserDB).filter(
@@ -475,7 +485,16 @@ def update_lead_status(
             detail="Lead nie został znaleziony"
         )
 
+    old_status = lead.status
     lead.status = status_update.status
+
+    if old_status != lead.status:
+        add_history(
+            db,
+            lead_id,
+            "status_changed",
+            f"Status zmieniony: {old_status} → {lead.status}"
+        )
 
     db.commit()
     db.refresh(lead)

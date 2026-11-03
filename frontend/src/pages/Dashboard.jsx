@@ -23,7 +23,9 @@ function getStatusLabel(status) {
 
 function Dashboard() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [username] = useState(
+  () => localStorage.getItem('username') || ''
+)
   const [stats, setStats] = useState(null)
   const priorityChartData = [
   { name: 'Wysoki priorytet', value: stats?.high_priority ?? 0 },
@@ -136,15 +138,13 @@ const exportToCSV = () => {
 
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    const savedUsername = localStorage.getItem('username')
+  const token = localStorage.getItem('access_token')
 
-    if (!token) {
-      navigate('/login', { replace: true })
-      return
-    }
+  if (!token) {
+    navigate('/login', { replace: true })
+    return
+  }
 
-    setUsername(savedUsername || '')
 
     async function loadDashboard() {
       try {
@@ -357,24 +357,32 @@ const exportToCSV = () => {
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
-        <a href="/" className="brand">
-          <span className="brand-icon">S</span>
-          <span>
-            SmartLead<span className="brand-accent"> AI</span>
-          </span>
-        </a>
+  <a href="/" className="brand dashboard-brand">
+    <span className="brand-icon">S</span>
+    <span className="dashboard-brand-name">
+      SMARTLEAD<span className="brand-accent"> AI</span>
+    </span>
+  </a>
 
-        <div className="dashboard-user">
-          <span>{username || 'Użytkownik'}</span>
-          <button
-            className="button button-login"
-            type="button"
-            onClick={handleLogout}
-          >
-            Wyloguj się
-          </button>
-        </div>
-      </header>
+  <div className="dashboard-user">
+    <div className="dashboard-user-profile">
+      <span className="dashboard-user-avatar">
+        {(username || 'U').charAt(0).toUpperCase()}
+      </span>
+      <span className="dashboard-user-name">
+        {username || 'Użytkownik'}
+      </span>
+    </div>
+
+    <button
+      className="button button-login dashboard-logout"
+      type="button"
+      onClick={handleLogout}
+    >
+      Wyloguj się
+    </button>
+  </div>
+</header>
 
       <section className="dashboard-content">
         <span className="section-label">SMARTLEAD AI</span>
