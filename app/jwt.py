@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from jose import jwt
 import os
 
+
 load_dotenv()
 
 
@@ -26,8 +27,8 @@ def create_access_token(data: dict):
         SECRET_KEY,
         algorithm=ALGORITHM
     )
-    
-    
+
+
 def get_current_user(token: str):
     payload = jwt.decode(
         token,
@@ -37,11 +38,13 @@ def get_current_user(token: str):
 
     username = payload.get("sub")
     role = payload.get("role")
+    user_id = payload.get("user_id")
 
-    if username is None:
+    if username is None or role is None or user_id is None:
         raise ValueError("Nieprawidłowy token")
 
     return {
+        "id": user_id,
         "username": username,
         "role": role
     }

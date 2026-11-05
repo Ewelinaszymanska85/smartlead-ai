@@ -80,6 +80,35 @@ def require_role(*required_roles: str):
         return current_user
 
     return role_checker
+
+
+def get_accessible_lead(
+    db: Session,
+    lead_id: int,
+    current_user: dict
+):
+    """
+    Pobiera leada, jeśli użytkownik ma do niego dostęp.
+    Administrator ma dostęp do wszystkich leadów.
+    Pozostali użytkownicy widzą wyłącznie własne rekordy.
+    """
+
+    query = db.query(LeadDB).filter(LeadDB.id == lead_id)
+
+    if current_user["role"] != "admin":
+        query = query.filter(
+            LeadDB.user_id == current_user["id"]
+        )
+
+    lead = query.first()
+
+    if not lead:
+        raise HTTPException(
+            status_code=404,
+            detail="Lead nie został znaleziony"
+        )
+
+    return lead
         
 
 @app.get("/")
@@ -146,9 +175,10 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         )
 
     access_token = create_access_token({
-    "sub": existing_user.username,
-    "role": existing_user.role
-})
+        "sub": existing_user.username,
+        "role": existing_user.role,
+        "user_id": existing_user.id
+    })
 
     return {
         "message": "Logowanie zakończone pomyślnie",
@@ -156,16 +186,16 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         "access_token": access_token
     }
 
-
 @app.post("/leads", response_model=LeadResponse)
 def create_lead(
     lead: Lead,
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
     analysis = analyze_lead(lead.message)
 
     lead_db = LeadDB(
+        user_id=current_user["id"],
         name=lead.name,
         email=str(lead.email),
         message=lead.message,
@@ -179,7 +209,7 @@ def create_lead(
     db.add(lead_db)
     db.commit()
     db.refresh(lead_db)
-    
+
     history = LeadHistoryDB(
         lead_id=lead_db.id,
         action="created",
@@ -198,7 +228,7 @@ def create_lead(
 
 @app.get("/leads", response_model=list[LeadDBResponse])
 def get_leads(
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_user_from_token),
     priority: Literal["normal", "high"] | None = None,
     category: Literal[
         "sklep internetowy",
@@ -214,7 +244,13 @@ def get_leads(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
+
     query = db.query(LeadDB)
+
+    if current_user["role"] != "admin":
+        query = query.filter(
+        LeadDB.user_id == current_user["id"]
+    )
 
     if created_from and created_to and created_from > created_to:
         raise HTTPException(
@@ -254,46 +290,54 @@ def get_leads(
 
 @app.get("/stats")
 def get_stats(
-    current_user: dict = Depends(require_role("admin", "sales")),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    # Łączna liczba leadów
-    total = db.query(LeadDB).count()
+    # Pobranie leadów dostępnych dla zalogowanego użytkownika.
+    query = db.query(LeadDB)
 
-    # Liczba leadów według priorytetu
-    high_priority = (
-        db.query(LeadDB)
-        .filter(LeadDB.priority == "high")
-        .count()
-    )
+    # Administrator widzi wszystkie leady.
+    # Pozostali użytkownicy widzą wyłącznie własne.
+    if current_user["role"] != "admin":
+        query = query.filter(
+            LeadDB.user_id == current_user["id"]
+        )
 
-    normal_priority = (
-        db.query(LeadDB)
-        .filter(LeadDB.priority == "normal")
-        .count()
-    )
+    # Łączna liczba leadów.
+    total = query.count()
 
-    # Liczba leadów według statusu
+    # Liczba leadów według priorytetu.
+    high_priority = query.filter(
+        LeadDB.priority == "high"
+    ).count()
+
+    normal_priority = query.filter(
+        LeadDB.priority == "normal"
+    ).count()
+
+    # Liczba leadów według statusu.
     statuses = {}
 
     for status in ["new", "contacted", "in_progress", "closed"]:
-        statuses[status] = (
-            db.query(LeadDB)
-            .filter(LeadDB.status == status)
-            .count()
-        )
+        statuses[status] = query.filter(
+            LeadDB.status == status
+        ).count()
 
-    # Liczba leadów według kategorii
+    # Liczba leadów według kategorii.
     categories = {}
 
-    for category in db.query(LeadDB.category).distinct():
+    category_names = (
+        query.with_entities(LeadDB.category)
+        .distinct()
+        .all()
+    )
+
+    for category in category_names:
         category_name = category[0]
 
-        categories[category_name] = (
-            db.query(LeadDB)
-            .filter(LeadDB.category == category_name)
-            .count()
-        )
+        categories[category_name] = query.filter(
+            LeadDB.category == category_name
+        ).count()
 
     return {
         "total": total,
@@ -307,20 +351,14 @@ def get_stats(
 @app.get("/leads/{lead_id}/history")
 def get_lead_history(
     lead_id: int,
-    current_user: dict = Depends(require_role("sales", "admin")),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    lead = get_accessible_lead(db, lead_id, current_user)
 
     history = (
         db.query(LeadHistoryDB)
-        .filter(LeadHistoryDB.lead_id == lead_id)
+        .filter(LeadHistoryDB.lead_id == lead.id)
         .order_by(LeadHistoryDB.created_at.asc())
         .all()
     )
@@ -342,37 +380,23 @@ def get_lead_history(
 @app.get("/leads/{lead_id}", response_model=LeadDBResponse)
 def get_lead(
     lead_id: int,
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
-
-    return lead
+    return get_accessible_lead(db, lead_id, current_user)
 
 
 @app.get("/leads/{lead_id}/notes")
 def get_lead_notes(
     lead_id: int,
-    current_user: dict = Depends(require_role("sales", "admin")),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    lead = get_accessible_lead(db, lead_id, current_user)
 
     notes = (
         db.query(LeadNoteDB)
-        .filter(LeadNoteDB.lead_id == lead_id)
+        .filter(LeadNoteDB.lead_id == lead.id)
         .order_by(LeadNoteDB.created_at.asc())
         .all()
     )
@@ -394,19 +418,13 @@ def get_lead_notes(
 def create_lead_note(
     lead_id: int,
     note: LeadNoteCreate,
-    current_user: dict = Depends(require_role("sales", "admin")),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    lead = get_accessible_lead(db, lead_id, current_user)
 
     new_note = LeadNoteDB(
-        lead_id=lead_id,
+        lead_id=lead.id,
         content=note.content
     )
 
@@ -428,19 +446,19 @@ def create_lead_note(
 @app.delete("/leads/{lead_id}")
 def delete_lead(
     lead_id: int,
-    current_user: dict = Depends(require_role("admin")),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
+    lead = get_accessible_lead(db, lead_id, current_user)
 
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    db.query(LeadNoteDB).filter(
+        LeadNoteDB.lead_id == lead_id
+    ).delete()
 
-    db.query(LeadNoteDB).filter(LeadNoteDB.lead_id == lead_id).delete()
-    db.query(LeadHistoryDB).filter(LeadHistoryDB.lead_id == lead_id).delete()
+    db.query(LeadHistoryDB).filter(
+        LeadHistoryDB.lead_id == lead_id
+    ).delete()
+
     db.delete(lead)
     db.commit()
 
@@ -451,16 +469,14 @@ def delete_lead(
 def update_lead(
     lead_id: int,
     lead_update: LeadUpdate,
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    existing_lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not existing_lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    existing_lead = get_accessible_lead(
+        db,
+        lead_id,
+        current_user
+    )
 
     prepare_lead_update(lead_update, existing_lead)
 
@@ -474,16 +490,14 @@ def update_lead(
 def update_lead_status(
     lead_id: int,
     status_update: LeadStatusUpdate,
-    current_user: str = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    lead = db.query(LeadDB).filter(LeadDB.id == lead_id).first()
-
-    if not lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead nie został znaleziony"
-        )
+    lead = get_accessible_lead(
+        db,
+        lead_id,
+        current_user
+    )
 
     old_status = lead.status
     lead.status = status_update.status

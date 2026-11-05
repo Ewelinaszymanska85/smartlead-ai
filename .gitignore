@@ -2,7 +2,6 @@ venv/
 __pycache__/
 *.pyc
 .env
-smartlead.db
-test_smartlead.db
+*.db
 .env.*
 !.env.example
