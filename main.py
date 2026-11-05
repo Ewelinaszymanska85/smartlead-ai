@@ -53,20 +53,36 @@ security = HTTPBearer()
 
 
 def get_current_user_from_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
 ):
     token = credentials.credentials
 
     try:
-        user = get_current_user(token)
-        return user
+        token_user = get_current_user(token)
     except Exception:
         raise HTTPException(
             status_code=401,
             detail="Nieprawidłowy token"
         )
-        
-        
+
+    user = db.query(UserDB).filter(
+        UserDB.id == token_user["id"]
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Konto użytkownika nie istnieje"
+        )
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "role": user.role
+    }
+
+
 def require_role(*required_roles: str):
     def role_checker(
         current_user: dict = Depends(get_current_user_from_token)

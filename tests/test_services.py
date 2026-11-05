@@ -1,4 +1,4 @@
-﻿from datetime import date
+from datetime import date
 
 import pytest
 from pydantic import ValidationError
@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from app.jwt import create_access_token, get_current_user
 from app.models import LeadAnalysis
 from app.services import analyze_lead
+from app.user_models import UserDB
 
 
 # ============================================================
@@ -23,7 +24,7 @@ def make_headers(username, role, user_id):
 
 
 def create_lead(client, headers, name="Anna", email="anna@example.com",
-                message="PotrzebujÄ™ strony internetowej"):
+                message="Potrzebuję strony internetowej"):
     return client.post(
         "/leads",
         headers=headers,
@@ -41,7 +42,7 @@ def create_lead(client, headers, name="Anna", email="anna@example.com",
 
 def test_analyze_lead_detects_category_and_high_priority():
     result = analyze_lead(
-        "PotrzebujÄ™ sklepu internetowego pilnie"
+        "Potrzebuję sklepu internetowego pilnie"
     )
 
     assert result.category == "sklep internetowy"
@@ -50,7 +51,7 @@ def test_analyze_lead_detects_category_and_high_priority():
 
 def test_analyze_lead_adds_score_for_long_message():
     result = analyze_lead(
-        "PotrzebujÄ™ nowoczesnej strony internetowej dla mojej firmy firmowej"
+        "Potrzebuję nowoczesnej strony internetowej dla mojej firmy firmowej"
     )
 
     assert result.score == 15
@@ -58,7 +59,7 @@ def test_analyze_lead_adds_score_for_long_message():
 
 def test_analyze_lead_detects_normal_priority():
     result = analyze_lead(
-        "PotrzebujÄ™ strony internetowej"
+        "Potrzebuję strony internetowej"
     )
 
     assert result.category == "strona internetowa"
@@ -75,7 +76,7 @@ def test_lead_analysis_rejects_invalid_priority():
 
 def test_analyze_lead_calculates_lead_level():
     result = analyze_lead(
-        "PotrzebujÄ™ pilnie nowoczesnego sklepu internetowego dla mojej firmy"
+        "Potrzebuję pilnie nowoczesnego sklepu internetowego dla mojej firmy"
     )
 
     assert result.score == 55
@@ -107,7 +108,7 @@ def test_create_lead_saves_score_and_lead_level(client, auth_headers):
         client,
         auth_headers,
         message=(
-            "PotrzebujÄ™ pilnie nowoczesnego sklepu "
+            "Potrzebuję pilnie nowoczesnego sklepu "
             "internetowego dla mojej firmy"
         )
     )
@@ -155,7 +156,7 @@ def test_get_leads_filters_by_priority(client, auth_headers):
         auth_headers,
         name="Jan Kowalski",
         email="jan@example.com",
-        message="PotrzebujÄ™ sklepu internetowego pilnie"
+        message="Potrzebuję sklepu internetowego pilnie"
     )
 
     response = client.get(
@@ -183,7 +184,7 @@ def test_get_leads_filters_by_priority_and_category(client, auth_headers):
         auth_headers,
         name="Jan Kowalski",
         email="jan@example.com",
-        message="PotrzebujÄ™ sklepu internetowego pilnie"
+        message="Potrzebuję sklepu internetowego pilnie"
     )
 
     create_lead(
@@ -191,7 +192,7 @@ def test_get_leads_filters_by_priority_and_category(client, auth_headers):
         auth_headers,
         name="Anna Nowak",
         email="anna@example.com",
-        message="PotrzebujÄ™ strony internetowej"
+        message="Potrzebuję strony internetowej"
     )
 
     response = client.get(
@@ -211,11 +212,11 @@ def test_get_leads_filters_by_priority_and_category(client, auth_headers):
 
 def test_get_leads_supports_pagination(client, auth_headers):
     create_lead(client, auth_headers, "Jan", "jan@example.com",
-                "PotrzebujÄ™ sklepu internetowego pilnie")
+                "Potrzebuję sklepu internetowego pilnie")
     create_lead(client, auth_headers, "Anna", "anna@example.com",
-                "PotrzebujÄ™ strony internetowej")
+                "Potrzebuję strony internetowej")
     create_lead(client, auth_headers, "Piotr", "piotr@example.com",
-                "PotrzebujÄ™ aplikacji mobilnej")
+                "Potrzebuję aplikacji mobilnej")
 
     response = client.get(
         "/leads?limit=2&offset=0",
@@ -241,11 +242,11 @@ def test_get_leads_rejects_invalid_offset(client, auth_headers):
 def test_filter_leads_by_search(client, auth_headers):
     create_lead(
         client, auth_headers, "Anna", "anna@example.com",
-        "PotrzebujÄ™ sklepu internetowego"
+        "Potrzebuję sklepu internetowego"
     )
     create_lead(
         client, auth_headers, "Piotr", "piotr@example.com",
-        "PotrzebujÄ™ strony internetowej"
+        "Potrzebuję strony internetowej"
     )
 
     response = client.get("/leads?search=sklep", headers=auth_headers)
@@ -349,11 +350,11 @@ def test_search_lead_is_case_insensitive(client, auth_headers):
 def test_search_with_priority_filter(client, auth_headers):
     create_lead(
         client, auth_headers, "Anna", "anna@example.com",
-        "PotrzebujÄ™ sklepu internetowego pilnie"
+        "Potrzebuję sklepu internetowego pilnie"
     )
     create_lead(
         client, auth_headers, "Piotr", "piotr@example.com",
-        "PotrzebujÄ™ sklepu internetowego"
+        "Potrzebuję sklepu internetowego"
     )
 
     response = client.get(
@@ -369,15 +370,15 @@ def test_search_with_priority_filter(client, auth_headers):
 def test_search_with_category_filter(client, auth_headers):
     create_lead(
         client, auth_headers, "Anna", "anna@example.com",
-        "PotrzebujÄ™ sklepu internetowego"
+        "Potrzebuję sklepu internetowego"
     )
     create_lead(
         client, auth_headers, "Piotr", "piotr@example.com",
-        "PotrzebujÄ™ strony internetowej"
+        "Potrzebuję strony internetowej"
     )
 
     response = client.get(
-        "/leads?search=PotrzebujÄ™&category=sklep%20internetowy",
+        "/leads?search=Potrzebuję&category=sklep%20internetowy",
         headers=auth_headers
     )
 
@@ -467,7 +468,7 @@ def test_invalid_created_date_range(client, auth_headers):
 def test_get_lead_by_id(client, auth_headers):
     create_lead(
         client, auth_headers, "Jan Kowalski", "jan@example.com",
-        "PotrzebujÄ™ sklepu internetowego pilnie"
+        "Potrzebuję sklepu internetowego pilnie"
     )
 
     response = client.get("/leads/1", headers=auth_headers)
@@ -489,7 +490,7 @@ def test_get_lead_by_id_returns_404_for_missing_lead(
     response = client.get("/leads/999", headers=auth_headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Lead nie zostaĹ‚ znaleziony"
+    assert response.json()["detail"] == "Lead nie został znaleziony"
 
 
 # ============================================================
@@ -598,7 +599,7 @@ def test_delete_lead(client, auth_headers):
     response = client.delete("/leads/1", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.json()["message"] == "Lead zostaĹ‚ usuniÄ™ty"
+    assert response.json()["message"] == "Lead został usunięty"
 
     get_response = client.get("/leads/1", headers=auth_headers)
 
@@ -612,7 +613,7 @@ def test_delete_lead_returns_404_for_missing_lead(
     response = client.delete("/leads/999", headers=auth_headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Lead nie zostaĹ‚ znaleziony"
+    assert response.json()["detail"] == "Lead nie został znaleziony"
 
 
 def test_user_can_delete_own_lead(client):
@@ -676,7 +677,7 @@ def test_update_lead(client, auth_headers):
         json={
             "name": "Anna Kowalska",
             "email": "anna@example.com",
-            "message": "PotrzebujÄ™ sklepu internetowego pilnie"
+            "message": "Potrzebuję sklepu internetowego pilnie"
         }
     )
 
@@ -686,7 +687,7 @@ def test_update_lead(client, auth_headers):
 
     assert data["name"] == "Anna Kowalska"
     assert data["email"] == "anna@example.com"
-    assert data["message"] == "PotrzebujÄ™ sklepu internetowego pilnie"
+    assert data["message"] == "Potrzebuję sklepu internetowego pilnie"
     assert data["category"] == "sklep internetowy"
     assert data["priority"] == "high"
     assert data["score"] == 50
@@ -703,12 +704,12 @@ def test_update_lead_returns_404_for_missing_lead(
         json={
             "name": "Anna Kowalska",
             "email": "anna@example.com",
-            "message": "PotrzebujÄ™ sklepu internetowego"
+            "message": "Potrzebuję sklepu internetowego"
         }
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Lead nie zostaĹ‚ znaleziony"
+    assert response.json()["detail"] == "Lead nie został znaleziony"
 
 
 # ============================================================
@@ -718,11 +719,11 @@ def test_update_lead_returns_404_for_missing_lead(
 def test_get_stats(client, auth_headers):
     create_lead(
         client, auth_headers, "Anna", "anna@example.com",
-        "PotrzebujÄ™ sklepu internetowego pilnie"
+        "Potrzebuję sklepu internetowego pilnie"
     )
     create_lead(
         client, auth_headers, "Piotr", "piotr@example.com",
-        "PotrzebujÄ™ strony internetowej"
+        "Potrzebuję strony internetowej"
     )
 
     response = client.get("/stats", headers=auth_headers)
@@ -847,7 +848,7 @@ def test_register_user(client):
     data = response.json()
 
     assert data["username"] == "new_registration_user"
-    assert data["message"] == "UĹĽytkownik zostaĹ‚ utworzony"
+    assert data["message"] == "Użytkownik został utworzony"
 
 
 def test_register_existing_user(client):
@@ -869,7 +870,7 @@ def test_register_existing_user(client):
 
     assert response.status_code == 409
     assert response.json()["detail"] == (
-        "UĹĽytkownik o tej nazwie juĹĽ istnieje"
+        "Użytkownik o tej nazwie już istnieje"
     )
 
 
@@ -919,7 +920,7 @@ def test_login_user(client):
     data = response.json()
 
     assert data["username"] == "loginuser"
-    assert data["message"] == "Logowanie zakoĹ„czone pomyĹ›lnie"
+    assert data["message"] == "Logowanie zakończone pomyślnie"
     assert "access_token" in data
     assert isinstance(data["access_token"], str)
 
@@ -997,7 +998,7 @@ def test_sales_can_create_lead_note(client):
     note_response = client.post(
         f"/leads/{lead_id}/notes",
         json={
-            "content": "Klient zainteresowany. OddzwoniÄ‡ jutro."
+            "content": "Klient zainteresowany. Oddzwonić jutro."
         },
         headers=headers
     )
@@ -1006,10 +1007,10 @@ def test_sales_can_create_lead_note(client):
 
     data = note_response.json()
 
-    assert data["message"] == "Notatka zostaĹ‚a dodana"
+    assert data["message"] == "Notatka została dodana"
     assert data["note"]["lead_id"] == lead_id
     assert data["note"]["content"] == (
-        "Klient zainteresowany. OddzwoniÄ‡ jutro."
+        "Klient zainteresowany. Oddzwonić jutro."
     )
 
 
@@ -1052,7 +1053,7 @@ def test_admin_can_create_lead_note(client, auth_headers):
 
     response = client.post(
         "/leads/1/notes",
-        json={"content": "Admin dodaĹ‚ notatkÄ™ do leada."},
+        json={"content": "Admin dodał notatkę do leada."},
         headers=auth_headers
     )
 
@@ -1060,10 +1061,10 @@ def test_admin_can_create_lead_note(client, auth_headers):
 
     data = response.json()
 
-    assert data["message"] == "Notatka zostaĹ‚a dodana"
+    assert data["message"] == "Notatka została dodana"
     assert data["note"]["lead_id"] == 1
     assert data["note"]["content"] == (
-        "Admin dodaĹ‚ notatkÄ™ do leada."
+        "Admin dodał notatkę do leada."
     )
 
 
@@ -1080,12 +1081,12 @@ def test_empty_lead_note_is_rejected(client, auth_headers):
 def test_create_note_for_nonexistent_lead(client, auth_headers):
     response = client.post(
         "/leads/999999/notes",
-        json={"content": "Notatka do nieistniejÄ…cego leada"},
+        json={"content": "Notatka do nieistniejącego leada"},
         headers=auth_headers
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Lead nie zostaĹ‚ znaleziony"
+    assert response.json()["detail"] == "Lead nie został znaleziony"
 
 
 def test_sales_can_get_lead_notes(client):
@@ -1213,7 +1214,7 @@ def test_create_lead_creates_history(client, auth_headers):
     assert data["lead_id"] == lead_id
     assert len(data["history"]) >= 1
     assert data["history"][0]["action"] == "created"
-    assert data["history"][0]["details"] == "Lead zostaĹ‚ utworzony"
+    assert data["history"][0]["details"] == "Lead został utworzony"
 
 
 def test_user_can_get_own_lead_history(client):
@@ -1259,3 +1260,33 @@ def get_lead_id(client, headers, email):
     )
 
     return lead["id"]
+
+
+def test_role_change_is_applied_to_existing_token(client, db, auth_headers):
+    # Przygotowanie leadów należących do dwóch użytkowników.
+    user_headers = make_headers("testuser", "user", 2)
+
+    create_lead(
+        client,
+        auth_headers,
+        "Lead administratora",
+        "admin@example.com"
+    )
+
+    create_lead(
+        client,
+        user_headers,
+        "Lead użytkownika",
+        "user@example.com"
+    )
+
+    # Zmiana roli użytkownika bez wydawania nowego tokenu.
+    user = db.query(UserDB).filter(UserDB.id == 2).first()
+    user.role = "admin"
+    db.commit()
+
+    # Użycie starego tokenu z pierwotną rolą "user".
+    response = client.get("/leads", headers=user_headers)
+
+    assert response.status_code == 200
+    assert len(response.json()) == 2

@@ -9,6 +9,14 @@ load_dotenv()
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY or len(SECRET_KEY.encode("utf-8")) < 32:
+    raise RuntimeError(
+        "SECRET_KEY nie jest ustawiony lub jest zbyt krótki. "
+        "Wymagane minimum to 32 bajty."
+    )
+
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
