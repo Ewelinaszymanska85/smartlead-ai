@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { API_BASE_URL } from '../api'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -153,8 +154,8 @@ const exportToCSV = () => {
         }
 
     const [statsResponse, leadsResponse] = await Promise.all([
-          fetch('http://127.0.0.1:8000/stats', { headers }),
-          fetch('http://127.0.0.1:8000/leads?limit=100&sort=newest', { headers }),
+          fetch(`${API_BASE_URL}/stats`, { headers }),
+          fetch(`${API_BASE_URL}/leads?limit=100&sort=newest`, { headers }),
         ])
 
         if (statsResponse.status === 401 || leadsResponse.status === 401) {
@@ -197,7 +198,7 @@ const exportToCSV = () => {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/leads/${leadId}/status`,
+        `${API_BASE_URL}/leads/${leadId}/status`,
         {
           method: 'PATCH',
           headers: {
@@ -257,7 +258,7 @@ const exportToCSV = () => {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/leads/${leadId}/notes`,
+        `${API_BASE_URL}/leads/${leadId}/notes`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -308,7 +309,7 @@ const exportToCSV = () => {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/leads/${leadId}/notes`,
+        `${API_BASE_URL}/leads/${leadId}/notes`,
         {
           method: 'POST',
           headers: {
