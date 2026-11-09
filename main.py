@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+﻿from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import FastAPI, Depends, Query, HTTPException, Header
@@ -25,9 +25,6 @@ from app import user_models
 from app.user_models import UserDB
 from app.db_models import LeadDB, LeadNoteDB, LeadHistoryDB
 from app.jwt import create_access_token, get_current_user
-
-
-Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()

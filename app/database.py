@@ -1,7 +1,9 @@
 import os
+import ssl
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
@@ -9,26 +11,43 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 load_dotenv()
 
 
-# Lokalnie używamy SQLite, a po wdrożeniu możemy podać adres PostgreSQL.
+# Pobranie adresu bazy danych.
+# Domyślnie lokalnie korzystamy z SQLite.
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "sqlite:///./smartlead.db"
 )
 
 
-# Dostosowanie adresu PostgreSQL do formatu SQLAlchemy.
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace(
-        "postgres://",
-        "postgresql://",
-        1
-    )
+# Konfiguracja połączenia z bazą danych.
+connect_args = {}
+
+
+# Konfiguracja PostgreSQL z wykorzystaniem sterownika pg8000.
+if DATABASE_URL.startswith(("postgres://", "postgresql://")):
+    url = make_url(DATABASE_URL)
+
+    # Usunięcie parametrów przeznaczonych dla sterownika libpq.
+    query = {
+        key: value
+        for key, value in url.query.items()
+        if key not in ("sslmode", "channel_binding")
+    }
+
+    # Wybór sterownika pg8000.
+    DATABASE_URL = url.set(
+        drivername="postgresql+pg8000",
+        query=query
+    ).render_as_string(hide_password=False)
+
+    # Bezpieczne połączenie SSL z PostgreSQL.
+    connect_args = {
+        "ssl_context": ssl.create_default_context()
+    }
 
 
 # SQLite wymaga specjalnego parametru połączenia.
-connect_args = {}
-
-if DATABASE_URL.startswith("sqlite"):
+elif DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
 
