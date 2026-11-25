@@ -19,7 +19,15 @@ DATABASE_URL = os.getenv(
 )
 
 DATABASE_URL = DATABASE_URL.strip().strip('"').strip("'")
-
+print(
+    "DIAGNOSTYKA BAZY:",
+    {
+        "postgres": DATABASE_URL.startswith(("postgres://", "postgresql://")),
+        "sqlite": DATABASE_URL.startswith("sqlite"),
+        "dlugosc": len(DATABASE_URL),
+        "zawiera_scheme": "://" in DATABASE_URL[:30],
+    }
+)    
 
 # Konfiguracja połączenia z bazą danych.
 connect_args = {}
