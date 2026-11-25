@@ -18,6 +18,8 @@ DATABASE_URL = os.getenv(
     "sqlite:///./smartlead.db"
 )
 
+DATABASE_URL = DATABASE_URL.strip().strip('"').strip("'")
+
 
 # Konfiguracja połączenia z bazą danych.
 connect_args = {}
