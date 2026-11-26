@@ -793,3 +793,20 @@
     font-size: 24px;
   }
 }
+/* Poprawa odstêpów w kartach statystyk */
+.dashboard-stat-card span {
+  display: block;
+  margin-bottom: 12px;
+  color: #77738e;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.dashboard-stat-card strong {
+  display: block;
+  color: #654bd0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+}
