@@ -793,7 +793,9 @@
     font-size: 24px;
   }
 }
-/* Poprawa odstêpów w kartach statystyk */
+
+
+/* Odstepy w kartach statystyk */
 .dashboard-stat-card span {
   display: block;
   margin-bottom: 12px;
