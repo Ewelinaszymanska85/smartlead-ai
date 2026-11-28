@@ -812,3 +812,60 @@
   font-weight: 800;
   line-height: 1.2;
 }
+
+
+/* Formularz dodawania klienta */
+.lead-create-area {
+  margin: 0 0 24px;
+}
+
+.lead-create-form {
+  display: grid;
+  gap: 12px;
+  max-width: 620px;
+  margin-top: 18px;
+  padding: 24px;
+  border: 1px solid #ececf5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(32, 33, 58, 0.06);
+}
+
+.lead-create-form h3 {
+  margin: 0 0 8px;
+  color: #20213a;
+}
+
+.lead-create-form label {
+  color: #20213a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lead-create-form input,
+.lead-create-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #dcdcea;
+  border-radius: 9px;
+  background: #fff;
+  color: #20213a;
+  font: inherit;
+}
+
+.lead-create-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.lead-create-form input:focus,
+.lead-create-form textarea:focus {
+  outline: 2px solid #7258e8;
+  outline-offset: 1px;
+}
+
+.lead-create-form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

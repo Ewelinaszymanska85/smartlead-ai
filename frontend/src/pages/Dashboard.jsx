@@ -59,6 +59,11 @@ value,
   const [notesLoadingLeadId, setNotesLoadingLeadId] = useState(null)
   const [noteDrafts, setNoteDrafts] = useState({})
   const [savingNoteLeadId, setSavingNoteLeadId] = useState(null)
+  const [showLeadForm, setShowLeadForm] = useState(false)
+  const [newLead, setNewLead] = useState({ name: '', email: '', message: '' })
+  const [savingLead, setSavingLead] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+
 
 function clearFilters() {
   setSearchTerm('')
@@ -349,6 +354,74 @@ const exportToCSV = () => {
     }
   }
 
+
+  async function handleCreateLead(event) {
+    event.preventDefault()
+
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    setError('')
+    setSuccessMessage('')
+    setSavingLead(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/leads`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newLead),
+      })
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('username')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      let data = {}
+      try {
+        data = await response.json()
+      } catch {
+        data = {}
+      }
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Nie uda?o si? doda? klienta.')
+      }
+
+      setNewLead({ name: '', email: '', message: '' })
+      setShowLeadForm(false)
+      setSuccessMessage(data.message || 'Klient zosta? dodany.')
+
+      const [statsResponse, leadsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/leads?limit=100&sort=newest`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
+
+      if (statsResponse.ok && leadsResponse.ok) {
+        const statsData = await statsResponse.json()
+        const leadsData = await leadsResponse.json()
+        setStats(statsData)
+        setLeads(Array.isArray(leadsData) ? leadsData : leadsData.leads || [])
+      }
+    } catch (err) {
+      setError(err.message || 'Wyst?pi? b??d podczas dodawania klienta.')
+    } finally {
+      setSavingLead(false)
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem('access_token')
     localStorage.removeItem('username')
@@ -394,6 +467,7 @@ const exportToCSV = () => {
 
         {message && <p role="status">{message}</p>}
         {error && <p role="alert">{error}</p>}
+        {successMessage && <p role="status">{successMessage}</p>}
 
         {stats && (
   <div className="dashboard-stats">
@@ -522,6 +596,71 @@ const exportToCSV = () => {
 
 
         <section className="dashboard-leads">
+          <div className="lead-create-area">
+            <button
+              className="button button-login"
+              type="button"
+              onClick={() => {
+                setShowLeadForm((current) => !current)
+                setError('')
+                setSuccessMessage('')
+              }}
+            >
+              {showLeadForm ? 'Anuluj' : '+ Dodaj klienta'}
+            </button>
+
+            {showLeadForm && (
+              <form className="lead-create-form" onSubmit={handleCreateLead}>
+                <h3>Dodaj nowego klienta</h3>
+
+                <label htmlFor="new-lead-name">Imi? i nazwisko</label>
+                <input
+                  id="new-lead-name"
+                  type="text"
+                  value={newLead.name}
+                  onChange={(event) =>
+                    setNewLead({ ...newLead, name: event.target.value })
+                  }
+                  required
+                  maxLength={150}
+                  placeholder="Np. Jan Kowalski"
+                />
+
+                <label htmlFor="new-lead-email">Adres e-mail</label>
+                <input
+                  id="new-lead-email"
+                  type="email"
+                  value={newLead.email}
+                  onChange={(event) =>
+                    setNewLead({ ...newLead, email: event.target.value })
+                  }
+                  required
+                  placeholder="jan@example.com"
+                />
+
+                <label htmlFor="new-lead-message">Tre?? zapytania</label>
+                <textarea
+                  id="new-lead-message"
+                  value={newLead.message}
+                  onChange={(event) =>
+                    setNewLead({ ...newLead, message: event.target.value })
+                  }
+                  required
+                  placeholder="Opisz, czego potrzebuje klient..."
+                />
+
+                <button
+                  className="button button-login"
+                  type="submit"
+                  disabled={savingLead}
+                >
+                  {savingLead ? 'Zapisywanie...' : 'Zapisz klienta'}
+                </button>
+              </form>
+            )}
+          </div>
+
+
           <h2>Lista leadów</h2>
 
             <div className="leads-filters">
